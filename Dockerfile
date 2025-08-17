@@ -8,7 +8,7 @@ COPY . .
 
 # Install production dependencies
 RUN npm pkg delete scripts.prepare && \
-    npm ci --production --no-audit --no-fund
+    npm ci --omit=dev --no-audit --no-fund
 
 # Make start script executable
 RUN chmod +x start.sh
