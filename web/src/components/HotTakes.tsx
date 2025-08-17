@@ -101,22 +101,7 @@ export default function HotTakes() {
 
 
   const shareToTwitter = (take: Take) => {
-    // Random roasting postscripts
-    const roasts = [
-      "(ps you're probably wrong but go off)",
-      "(this take brought to you by brain rot)",
-      "(your followers will unfollow you for this)",
-      "(delete this later bestie)",
-      "(main character syndrome activated)",
-      "(touch grass after posting this)",
-      "(ratio incoming in 3... 2...)",
-      "(chronically online behavior tbh)",
-      "(your parents would be proud... jk)",
-      "(this is why we can't have nice things)"
-    ];
-    const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
-    
-    const text = `${take.take}\n\n@askthrop on "${take.topic}"\n\n${randomRoast}`;
+    const text = `${take.take}\n\n@askthrop on "${take.topic}"`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

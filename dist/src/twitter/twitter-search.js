@@ -12,13 +12,20 @@ export class TwitterSearch {
     MIN_SEARCH_INTERVAL = 1000; // 1 second between searches
     constructor() {
         const config = getConfig();
-        if (config.twitter?.apiKey) {
+        // Use Bearer Token if available for better API access
+        const bearerToken = config.twitter?.bearerToken || process.env.TWITTER_BEARER_TOKEN;
+        if (bearerToken) {
+            this.client = new TwitterApi(bearerToken);
+            logger.debug('Twitter search using Bearer Token');
+        }
+        else if (config.twitter?.apiKey) {
             this.client = new TwitterApi({
                 appKey: config.twitter.apiKey,
                 appSecret: config.twitter.apiSecretKey,
                 accessToken: config.twitter.accessToken,
                 accessSecret: config.twitter.accessTokenSecret,
             });
+            logger.debug('Twitter search using OAuth 1.0a');
         }
     }
     /**
