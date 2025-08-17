@@ -1,0 +1,19 @@
+# Simple API-only Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Install dependencies and build
+RUN npm install && npm run build
+
+# Clean up dev dependencies
+RUN npm prune --production
+
+# Expose port (Railway sets PORT env var)
+EXPOSE ${PORT:-3001}
+
+# Start the API server directly
+CMD ["node", "dist/src/api/start.js"]
