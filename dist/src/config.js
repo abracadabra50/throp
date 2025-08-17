@@ -47,7 +47,7 @@ export function loadConfig() {
                 model: process.env.PERPLEXITY_MODEL || 'sonar-medium-online',
             },
             bot: {
-                answerEngine: process.env.ANSWER_ENGINE || 'openai',
+                answerEngine: process.env.ANSWER_ENGINE || 'hybrid-claude',
                 maxMentionsPerBatch: parseInt(process.env.MAX_MENTIONS_PER_BATCH || '10', 10),
                 maxTweetsPerHour: parseInt(process.env.MAX_TWEETS_PER_HOUR || '30', 10),
                 maxTweetLength: parseInt(process.env.MAX_TWEET_LENGTH || '280', 10),
@@ -99,9 +99,12 @@ export function loadConfig() {
 function validateAnswerEngine(config) {
     const engine = config.bot.answerEngine;
     switch (engine) {
-        case 'openai':
-            if (!config.openai.apiKey) {
-                throw new Error('OpenAI API key is required when using OpenAI answer engine');
+        case 'hybrid-claude':
+            if (!config.perplexity.apiKey) {
+                throw new Error('Perplexity API key is required when using hybrid-claude answer engine');
+            }
+            if (!process.env.ANTHROPIC_API_KEY) {
+                throw new Error('Anthropic API key is required when using hybrid-claude answer engine');
             }
             break;
         case 'perplexity':
@@ -109,9 +112,10 @@ function validateAnswerEngine(config) {
                 throw new Error('Perplexity API key is required when using Perplexity answer engine');
             }
             break;
-        case 'dexa':
-            // Dexa validation would go here if we had the API
-            console.warn(chalk.yellow('⚠️ Dexa answer engine is currently in private beta'));
+        case 'perplexity-chaos':
+            if (!config.perplexity.apiKey) {
+                throw new Error('Perplexity API key is required when using perplexity-chaos answer engine');
+            }
             break;
         case 'custom':
             console.log(chalk.cyan('ℹ️ Using custom answer engine - ensure your implementation is ready'));

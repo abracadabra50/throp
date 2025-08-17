@@ -68,7 +68,7 @@ export const ConfigSchema = z.object({
 
   // Bot behaviour settings
   bot: z.object({
-    answerEngine: z.enum(['openai', 'perplexity', 'dexa', 'custom']).default('openai'),
+    answerEngine: z.enum(['hybrid-claude', 'perplexity', 'perplexity-chaos', 'custom']).default('hybrid-claude'),
     maxMentionsPerBatch: z.number().default(10),
     maxTweetsPerHour: z.number().default(30),
     maxTweetLength: z.number().default(280),

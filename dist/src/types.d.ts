@@ -107,7 +107,7 @@ export declare const ConfigSchema: z.ZodObject<{
         temperature?: number | undefined;
     }>;
     bot: z.ZodObject<{
-        answerEngine: z.ZodDefault<z.ZodEnum<["openai", "perplexity", "dexa", "custom"]>>;
+        answerEngine: z.ZodDefault<z.ZodEnum<["hybrid-claude", "perplexity", "perplexity-chaos", "custom"]>>;
         maxMentionsPerBatch: z.ZodDefault<z.ZodNumber>;
         maxTweetsPerHour: z.ZodDefault<z.ZodNumber>;
         maxTweetLength: z.ZodDefault<z.ZodNumber>;
@@ -116,7 +116,7 @@ export declare const ConfigSchema: z.ZodObject<{
         dryRun: z.ZodDefault<z.ZodBoolean>;
         debug: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        answerEngine: "openai" | "perplexity" | "dexa" | "custom";
+        answerEngine: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos";
         maxMentionsPerBatch: number;
         maxTweetsPerHour: number;
         maxTweetLength: number;
@@ -125,7 +125,7 @@ export declare const ConfigSchema: z.ZodObject<{
         dryRun: boolean;
         debug: boolean;
     }, {
-        answerEngine?: "openai" | "perplexity" | "dexa" | "custom" | undefined;
+        answerEngine?: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
         maxMentionsPerBatch?: number | undefined;
         maxTweetsPerHour?: number | undefined;
         maxTweetLength?: number | undefined;
@@ -204,7 +204,7 @@ export declare const ConfigSchema: z.ZodObject<{
         url?: string | undefined;
     };
     bot: {
-        answerEngine: "openai" | "perplexity" | "dexa" | "custom";
+        answerEngine: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos";
         maxMentionsPerBatch: number;
         maxTweetsPerHour: number;
         maxTweetLength: number;
@@ -261,7 +261,7 @@ export declare const ConfigSchema: z.ZodObject<{
         namespace?: string | undefined;
     };
     bot: {
-        answerEngine?: "openai" | "perplexity" | "dexa" | "custom" | undefined;
+        answerEngine?: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
         maxMentionsPerBatch?: number | undefined;
         maxTweetsPerHour?: number | undefined;
         maxTweetLength?: number | undefined;
