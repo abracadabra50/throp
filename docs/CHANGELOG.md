@@ -1,9 +1,17 @@
 # Changelog
 
-## [2025-08-17] - Claude Model Update
+## [2025-08-17] - Claude Model Update & OAuth2 Support
 ### Fixed
 - Updated Claude model to `claude-sonnet-4-20250514` as specified
 - Model now uses exact string as requested
+- Fixed Twitter mentions API to use OAuth 2.0 Bearer Token
+- Mentions API now uses proper `/2/users/{id}/mentions` endpoint
+
+### Added
+- OAuth 2.0 Bearer Token support for Twitter API
+- Automatic detection and use of Bearer Token when available
+- Bot User ID configuration for mentions endpoint
+- Better authentication fallback (OAuth 2.0 → OAuth 1.0a)
 
 ## [2024-12-31] - Subdomain Support & Complete API Fixes
 ### Fixed

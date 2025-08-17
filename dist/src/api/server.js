@@ -239,6 +239,7 @@ export class ApiServer {
                         error: 'Twitter functionality not available in API-only mode',
                     });
                 }
+                // Get mentions using the proper Twitter API with Bearer Token
                 const limit = parseInt(req.query.limit) || 10;
                 const mentions = await this.twitterClient.getMentions(undefined, limit);
                 return res.json({

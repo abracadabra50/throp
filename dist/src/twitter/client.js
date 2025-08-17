@@ -30,13 +30,23 @@ export class TwitterClient {
     rateLimits = new Map();
     throttle;
     constructor() {
-        // Initialize Twitter client
-        this.client = new TwitterApi({
-            appKey: this.config.twitter.apiKey,
-            appSecret: this.config.twitter.apiSecretKey,
-            accessToken: this.config.twitter.accessToken,
-            accessSecret: this.config.twitter.accessTokenSecret,
-        });
+        // Initialize Twitter client with OAuth2 Bearer Token if available
+        const bearerToken = this.config.twitter.bearerToken || process.env.TWITTER_BEARER_TOKEN;
+        if (bearerToken) {
+            // Use Bearer Token for better API access (OAuth 2.0)
+            this.client = new TwitterApi(bearerToken);
+            logger.info('Twitter client initialized with Bearer Token (OAuth 2.0)');
+        }
+        else {
+            // Fallback to OAuth 1.0a
+            this.client = new TwitterApi({
+                appKey: this.config.twitter.apiKey,
+                appSecret: this.config.twitter.apiSecretKey,
+                accessToken: this.config.twitter.accessToken,
+                accessSecret: this.config.twitter.accessTokenSecret,
+            });
+            logger.info('Twitter client initialized with OAuth 1.0a');
+        }
         this.v2Client = this.client.v2;
         // Set up rate limiting based on API plan
         const delay = calculateRequestDelay(this.config.twitter.apiPlan);
