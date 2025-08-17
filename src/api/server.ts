@@ -88,7 +88,7 @@ export class ApiServer {
     
     this.startTime = new Date();
     
-    // Initialize services
+    // Initialize services with error handling
     // Only initialize Twitter client if not in API-only mode
     const isApiOnly = process.env.API_ONLY_MODE === 'true';
     if (!isApiOnly) {
@@ -98,8 +98,23 @@ export class ApiServer {
         logger.warn('Twitter client initialization failed - Twitter features disabled', error);
       }
     }
-    this.answerEngine = createHybridClaudeEngine();
-    this.cache = new RedisCache();
+    
+    // Try to initialize answer engine, but don't crash if it fails
+    try {
+      this.answerEngine = createHybridClaudeEngine();
+      logger.info('Answer engine initialized successfully');
+    } catch (error) {
+      logger.error('Answer engine initialization failed - chat features disabled', error);
+      this.answerEngine = null as any; // Will handle null checks in routes
+    }
+    
+    // Initialize cache with error handling
+    try {
+      this.cache = new RedisCache();
+    } catch (error) {
+      logger.warn('Redis cache initialization failed - caching disabled', error);
+      this.cache = null as any;
+    }
     
     this.setupMiddleware();
     this.setupRoutes();
@@ -162,6 +177,16 @@ export class ApiServer {
     // Mount tweet routes
     this.app.use('/api/tweet', createTweetRoutes());
     
+    // Root endpoint - simple response
+    this.app.get('/', (_req: Request, res: Response) => {
+      res.json({ 
+        service: 'throp-api', 
+        status: 'running',
+        health: '/health',
+        docs: 'https://github.com/abracadabra50/throp'
+      });
+    });
+    
     // Health check (required for Railway deployment)
     this.app.get('/health', (_req: Request, res: Response) => {
       const health = {
@@ -204,13 +229,22 @@ export class ApiServer {
       try {
         const { message, context } = req.body as ChatRequest;
         
-              if (!message) {
-        res.status(400).json({
-          success: false,
-          error: 'Message is required',
-        });
-        return;
-      }
+        if (!message) {
+          res.status(400).json({
+            success: false,
+            error: 'Message is required',
+          });
+          return;
+        }
+        
+        // Check if answer engine is available
+        if (!this.answerEngine) {
+          res.status(503).json({
+            success: false,
+            error: 'Chat service is temporarily unavailable. Please check API keys are configured.',
+          });
+          return;
+        }
         
         logger.info('Processing chat request', {
           messageLength: message.length,
@@ -494,11 +528,26 @@ export class ApiServer {
    * Start the API server
    */
   async start(): Promise<void> {
-    // Initialize services
-    await this.cache.connect();
-    await this.answerEngine.validate();
+    // Try to connect services but don't fail if they're unavailable
+    if (this.cache) {
+      try {
+        await this.cache.connect();
+        logger.info('Redis cache connected');
+      } catch (error) {
+        logger.warn('Redis cache connection failed - caching disabled', error);
+      }
+    }
     
-    // Start server
+    if (this.answerEngine) {
+      try {
+        await this.answerEngine.validate();
+        logger.info('Answer engine validated');
+      } catch (error) {
+        logger.warn('Answer engine validation failed - some features may be unavailable', error);
+      }
+    }
+    
+    // Start server - this should always work
     this.server.listen(this.port, () => {
       logger.success(`API server started on port ${this.port}`);
       logger.info(`WebSocket server available at ws://localhost:${this.port}`);
