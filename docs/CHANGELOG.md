@@ -5,6 +5,64 @@ All notable changes to Throp will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-01-17
+
+### 🔍 Added - Twitter/X Search Integration
+- **Real-time Twitter/X Search**: Bot now searches Twitter for current drama and trending topics
+- **Smart Context Detection**: Automatically triggers Twitter search for relevant keywords (drama, beef, trending, etc.)
+- **Result Caching**: 1-hour cache to respect API rate limits
+- **Engagement Sorting**: Prioritises high-engagement tweets in search results
+
+### 🚀 Improved
+- Bot now has actual Twitter awareness instead of just web search
+- Better responses to questions about current Twitter drama
+- More accurate information about trending topics and viral content
+- Seamless integration with existing Perplexity + Claude pipeline
+
+## [0.4.6] - 2025-08-17
+
+### Added - About Page & Roadmap
+- **About Throp Page**: Complete lore and backstory
+  - Origin story: Claude's chaotic younger cousin
+  - Powered by $throp token (contract address section)
+  - Feature roadmap/backlog with upcoming features
+  - Removed tech stack section per request
+- **Roadmap Features**: Public backlog with completed and planned features
+  - ✅ Completed: Twitter integration (@askthrop mentions)
+  - ✅ Completed: Reply mode on X platform
+  - ✅ Completed: Multi-lingual support (50+ languages)
+  - Upcoming: Meme generator, voice mode, image understanding
+  - Upcoming: Group chats, gaming mode, mobile app, memory system
+- **Navigation**: Added about links to headers
+- **Homepage Enhancement**: Added quick chat input field under trending prompts
+
+### Enhanced - Social Media & SEO
+- **Favicon Setup**: Added throp 🫠 emoji as favicon with multiple formats
+- **Open Graph Images**: Custom dynamic OG images for social sharing
+- **Twitter Cards**: Dedicated Twitter card images with throp branding
+- **Metadata Optimisation**: Comprehensive meta tags for all platforms
+  - Facebook, LinkedIn, Discord Open Graph support
+  - Twitter Card with @askthrop handle
+  - Apple touch icons and PWA support
+- **PWA Manifest**: Added manifest.json for installable web app
+- **SEO Files**: Created robots.txt and sitemap.xml
+- **Google & Search Engine Support**: Proper indexing directives
+
+## [0.4.5] - 2025-08-17
+
+### Redesigned - Best in Class Chat Experience
+- **Chat Bubbles**: Complete redesign with proper text containment
+  - Clean rounded rectangles with sharp corners for personality
+  - Gradient backgrounds for depth
+  - Bold black borders with drop shadows
+  - Text properly contained within bubble boundaries
+- **Animations**: Smooth entrance animations for messages
+  - Slide in from left (throp) and right (user)
+  - Typing indicator with bouncing dots
+  - Hover effects on bubbles
+- **Typography**: Optimized font sizes and line heights for readability
+- **Layout**: Better spacing and visual hierarchy
+
 ## [0.4.4] - 2025-08-17
 
 ### Fixed

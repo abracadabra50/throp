@@ -32,6 +32,9 @@ export default function Home() {
   
   // Random values for message bubbles
   const [messageRotations, setMessageRotations] = useState<Map<string, {avatar: number, bubble: number}>>(new Map());
+  
+  // Random values for prompt buttons (7 prompts)
+  const [promptRotations, setPromptRotations] = useState<number[]>([]);
 
   // Load saved messages from localStorage and set random offsets
   useEffect(() => {
@@ -49,6 +52,11 @@ export default function Home() {
         left: Math.random() * 100,
         rotate: Math.random() * 360,
       }))
+    );
+
+    // Set random rotations for prompt buttons
+    setPromptRotations(
+      Array.from({ length: 7 }, () => Math.random() * 2 - 1)
     );
 
     // Load saved messages
@@ -290,97 +298,282 @@ export default function Home() {
   };
 
   if (!showChat) {
-    // Landing page
+    // Landing page - best in class but chaotic
     return (
-      <div className="min-h-screen relative" style={{ background: '#fefdfb' }}>
-        {/* Background doodles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="doodle doodle-1">
-            <svg width="60" height="60" viewBox="0 0 60 60">
-              <circle cx="30" cy="30" r="25" fill="none" stroke="#ff7a45" strokeWidth="3" strokeDasharray="5,5" opacity="0.3"/>
-            </svg>
-          </div>
-          <div className="doodle doodle-2">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <path d="M10,40 Q40,10 70,40" fill="none" stroke="#4a90e2" strokeWidth="3" opacity="0.3"/>
-            </svg>
-          </div>
-          <div className="doodle doodle-3">
-            <svg width="50" height="50" viewBox="0 0 50 50">
-              <rect x="10" y="10" width="30" height="30" fill="none" stroke="#ffc0cb" strokeWidth="3" transform="rotate(15 25 25)" opacity="0.3"/>
-            </svg>
-          </div>
-          <div className="doodle doodle-4">
-            <svg width="70" height="70" viewBox="0 0 70 70">
-              <polygon points="35,10 50,40 20,40" fill="none" stroke="#f5e6d3" strokeWidth="3" opacity="0.3"/>
-            </svg>
-          </div>
+      <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #fefdfb 0%, #fff5ef 100%)' }}>
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
+          {doodlePositions.map((pos, i) => (
+            <div 
+              key={i}
+              className="absolute"
+              style={{
+                top: `${pos.top}%`,
+                left: `${pos.left}%`,
+                transform: `rotate(${pos.rotate}deg)`,
+              }}
+            >
+              <Image src="/throp-actual.svg" alt="" width={60} height={60} />
+            </div>
+          ))}
         </div>
 
-        <div className="flex flex-col items-center justify-center min-h-screen px-4">
-          {/* Throp character */}
-          <div 
-            className="wobble mb-8"
-            style={{ transform: `rotate(${randomOffsets.throp}deg)` }}
-          >
-            <Image 
-              src="/throp-actual.svg" 
-              alt="throp" 
-              width={250} 
-              height={250}
-              priority
-            />
+        {/* Header */}
+        <header className="flex justify-between items-center px-6 py-4 md:px-12 md:py-6">
+          <div className="flex items-center gap-3">
+            <Image src="/throp-actual.svg" alt="throp" width={45} height={45} className="wobble" />
+            <span className="font-bold text-2xl">throp</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a 
+              href="/about" 
+              className="text-sm font-medium hover:text-orange-500 transition-all"
+            >
+              about
+            </a>
+            <span className="text-sm text-gray-600">august 2025</span>
+          </div>
+        </header>
+
+        <div className="max-w-6xl mx-auto px-6 py-8 md:px-12">
+          {/* Main heading */}
+          <div className="mb-16 text-center">
+            <h1 className="text-6xl md:text-8xl font-bold mb-6" 
+                style={{ 
+                  transform: `rotate(${randomOffsets.title * 0.2}deg)`,
+                  lineHeight: '0.9'
+                }}>
+              ask me<br/>
+              <span className="text-orange-500">literally</span><br/>
+              anything
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-700 max-w-2xl mx-auto">
+              no filter, no fluff, just straight facts with attitude fr
+            </p>
           </div>
 
-          {/* Title */}
-          <h1 
-            className="text-6xl md:text-8xl font-bold mb-4"
-            style={{ 
-              transform: `rotate(${randomOffsets.title}deg)`,
-              fontFamily: 'Comic Sans MS, cursive'
-            }}
-          >
-            hi im throp 🫠
-          </h1>
-
-          {/* Tagline */}
-          <p className="text-xl md:text-2xl mb-12" style={{ transform: 'rotate(1deg)' }}>
-            <span className="scribbly-underline">the dumber cousin</span> of claude
-          </p>
-
-          {/* Main CTA */}
-          <button
-            onClick={() => setShowChat(true)}
-            className="scuffed-button ms-paint-shadow"
-            style={{ 
-              transform: `rotate(${randomOffsets.button}deg)`,
-              fontSize: '28px',
-              padding: '20px 40px'
-            }}
-          >
-            talk 2 throp
-          </button>
-
-          {/* About section */}
-          <div className="mt-20 flex gap-8 md:gap-16 flex-wrap justify-center">
-            <div className="text-center" style={{ transform: 'rotate(-3deg)' }}>
-              <div className="wonky-border p-6 bg-orange-100 mb-3">
-                <span style={{ fontSize: '60px' }}>🧠</span>
-              </div>
-              <p className="font-bold text-xl">smart (kinda)</p>
+          {/* Quick prompts */}
+          <div className="mb-12">
+            <h2 className="text-sm font-semibold mb-4 text-gray-600 uppercase tracking-wide">trending prompts rn</h2>
+            <div className="flex flex-wrap gap-3">
+              {[
+                "whats the bags app / thread guy drama",
+                "explain why everything costs so much",
+                "is solana still a thing or nah",
+                "roast my investment choices",
+                "why is gta6 taking forever fr",
+                "decode gen z slang for millennials",
+                "hot takes on the heatwave"
+              ].map((prompt, index) => (
+                <button
+                  key={prompt}
+                  onClick={() => {
+                    setInput(prompt);
+                    setShowChat(true);
+                  }}
+                  className="px-5 py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-sm font-medium shadow-sm"
+                  style={{ transform: `rotate(${promptRotations[index] || 0}deg)` }}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
-            <div className="text-center" style={{ transform: 'rotate(2deg)' }}>
-              <div className="wonky-border p-6 bg-blue-100 mb-3">
-                <span style={{ fontSize: '60px' }}>🎯</span>
-              </div>
-              <p className="font-bold text-xl">aligned (ish)</p>
+
+            {/* Quick chat entry */}
+            <div className="max-w-xl mx-auto mt-8">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const input = e.currentTarget.querySelector('input') as HTMLInputElement;
+                if (input?.value.trim()) {
+                  setInput(input.value);
+                  setShowChat(true);
+                }
+              }}>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="ask throp anything..."
+                    className="flex-1 px-4 py-3 border-3 border-black rounded-full text-lg focus:outline-none focus:ring-4 focus:ring-orange-300"
+                    style={{ 
+                      background: 'white',
+                      boxShadow: '3px 3px 0 #000'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full border-3 border-black hover:scale-105 transition-all font-bold"
+                    style={{ 
+                      boxShadow: '3px 3px 0 #000' 
+                    }}
+                  >
+                    go
+                  </button>
+                </div>
+              </form>
             </div>
-            <div className="text-center" style={{ transform: 'rotate(-1deg)' }}>
-              <div className="wonky-border p-6 bg-pink-100 mb-3">
-                <span style={{ fontSize: '60px' }}>🛡️</span>
-              </div>
-              <p className="font-bold text-xl">safe (lol)</p>
+          </div>
+
+          {/* Popular categories */}
+          <div className="mb-12">
+            <h2 className="text-sm font-semibold mb-4 text-gray-600 uppercase tracking-wide">popular rn</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {["crypto chaos", "tech drama", "hot takes", "market vibes", "gaming", "gen z decoder"].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setShowChat(true)}
+                  className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-all"
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {/* Feature cards grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {/* Hot Takes Card */}
+            <div className="group cursor-pointer" onClick={() => setShowChat(true)}>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">🔥</span>
+                  <span className="text-xs bg-orange-200 px-2 py-1 rounded-full font-semibold">hot</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">unhinged takes</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  spicy opinions on literally everything happening rn
+                </p>
+                <div className="text-xs text-gray-500">
+                  tap for chaos →
+                </div>
+              </div>
+            </div>
+
+            {/* Crypto Card */}
+            <div className="group cursor-pointer" onClick={() => {
+              setInput("whats happening in crypto today");
+              setShowChat(true);
+            }}>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">💰</span>
+                  <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-semibold">degen</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">crypto decoder</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  why your bags are down & which coin is mooning next
+                </p>
+                <div className="text-xs text-gray-500">
+                  probably nothing →
+                </div>
+              </div>
+            </div>
+
+            {/* Roast Card */}
+            <div className="group cursor-pointer" onClick={() => {
+              setInput("roast something for me");
+              setShowChat(true);
+            }}>
+              <div className="bg-gradient-to-br from-red-50 to-pink-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">💀</span>
+                  <span className="text-xs bg-red-200 px-2 py-1 rounded-full font-semibold">brutal</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">roast mode</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  when you need someone to destroy your life choices
+                </p>
+                <div className="text-xs text-gray-500">
+                  emotional damage →
+                </div>
+              </div>
+            </div>
+
+            {/* Explain Card */}
+            <div className="group cursor-pointer" onClick={() => {
+              setInput("explain something complicated but make it make sense");
+              setShowChat(true);
+            }}>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">🧠</span>
+                  <span className="text-xs bg-blue-200 px-2 py-1 rounded-full font-semibold">smart-ish</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">eli5 but unhinged</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  complex stuff explained like you're chronically online
+                </p>
+                <div className="text-xs text-gray-500">
+                  big brain time →
+                </div>
+              </div>
+            </div>
+
+            {/* Vibe Check Card */}
+            <div className="group cursor-pointer" onClick={() => {
+              setInput("vibe check the current state of everything");
+              setShowChat(true);
+            }}>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">✨</span>
+                  <span className="text-xs bg-green-200 px-2 py-1 rounded-full font-semibold">vibes</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">vibe check</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  when you need validation that everything is indeed cooked
+                </p>
+                <div className="text-xs text-gray-500">
+                  it's giving chaos →
+                </div>
+              </div>
+            </div>
+
+            {/* Drama Card */}
+            <div className="group cursor-pointer" onClick={() => {
+              setInput("whats the latest internet drama");
+              setShowChat(true);
+            }}>
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                   style={{ boxShadow: '4px 4px 0 #000' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl">☕</span>
+                  <span className="text-xs bg-yellow-200 px-2 py-1 rounded-full font-semibold">tea</span>
+                </div>
+                <h3 className="font-bold text-xl mb-2">drama decoder</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  all the tea you missed while touching grass
+                </p>
+                <div className="text-xs text-gray-500">
+                  sip sip →
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Big CTA */}
+          <div className="text-center mb-12">
+            <button
+              onClick={() => setShowChat(true)}
+              className="inline-flex items-center gap-3 text-2xl font-bold px-10 py-5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full border-3 border-black transition-all hover:scale-105"
+              style={{ 
+                boxShadow: '6px 6px 0 #000',
+                transform: `rotate(${randomOffsets.button * 0.3}deg)`,
+              }}
+            >
+              start yapping
+              <span className="text-3xl">→</span>
+            </button>
+            <p className="text-xs text-gray-500 mt-4">
+              warning: responses are unhinged but weirdly accurate
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              powered by <span className="font-bold">$throp</span>
+            </p>
           </div>
         </div>
       </div>
@@ -426,6 +619,15 @@ export default function Home() {
           
           {/* Controls */}
           <div className="flex items-center gap-2 md:gap-4">
+            {/* About link */}
+            <a
+              href="/about"
+              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-sm md:text-base"
+              style={{ transform: 'rotate(1deg)' }}
+            >
+              about
+            </a>
+
             {/* Share button */}
             <button
               onClick={shareChat}
