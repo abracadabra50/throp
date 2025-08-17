@@ -154,9 +154,9 @@ export default function Home() {
       const response = await (async () => {
       let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/chat';
       
-      // If using external API, try proxy route to avoid CORS
-      if (apiUrl.includes('localhost:3001')) {
-        console.log('Using proxy to avoid CORS issues');
+      // If using external API (Railway), use proxy route to avoid CORS
+      if (apiUrl.includes('railway.app') || !apiUrl.includes('localhost')) {
+        console.log('Using proxy to avoid CORS issues with Railway backend');
         apiUrl = '/api/proxy';
       }
       

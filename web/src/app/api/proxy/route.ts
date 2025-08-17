@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     console.log('Proxying message:', message);
     
     // Forward the request to the external API with correct format
-    const response = await fetch('http://localhost:3001/api/chat', {
+    const response = await fetch('https://throp-gh-production.up.railway.app/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,5 +1,19 @@
 # Changelog
 
+## [2024-12-31] - Frontend-Backend Connection Fix
+### Fixed
+- Updated frontend proxy route to connect to Railway backend (https://throp-gh-production.up.railway.app)
+- Fixed API URL detection logic to properly route Railway backend through proxy to avoid CORS issues
+- Backend is successfully running on Railway with Twitter bot connected
+### Issues Identified
+- Perplexity API returning 400 Bad Request errors (needs API key/configuration check on Railway)
+- Twitter mentions endpoint returning 401 errors when accessed directly
+### Changes Made
+- Modified `/web/src/app/api/proxy/route.ts` to use Railway backend URL
+- Updated `/web/src/app/page.tsx` to detect Railway URLs and use proxy appropriately
+
+# Changelog
+
 All notable changes to Throp will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
