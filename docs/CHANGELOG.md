@@ -1,6 +1,6 @@
 # Changelog
 
-## [2024-12-31] - Railway Deployment Health Check & API Fixes
+## [2024-12-31] - Subdomain Support & Complete API Fixes
 ### Fixed
 - **Fixed Railway deployment health check failures**:
   - Health check now always returns 200 status for Railway

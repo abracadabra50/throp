@@ -14,16 +14,23 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
     constructor() {
         super('hybrid-claude', 1000, 0.9);
         // Initialize Perplexity for facts
-        this.perplexity = new PerplexityEngine();
+        try {
+            this.perplexity = new PerplexityEngine();
+        }
+        catch (error) {
+            logger.error('Failed to initialize Perplexity engine:', error);
+            throw error;
+        }
         // Initialize Claude for personality
         const anthropicKey = process.env.ANTHROPIC_API_KEY;
         if (!anthropicKey) {
+            logger.error('ANTHROPIC_API_KEY is not set');
             throw new Error('ANTHROPIC_API_KEY is required for HybridClaudeEngine');
         }
         this.anthropic = new Anthropic({
             apiKey: anthropicKey,
         });
-        this.model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+        this.model = process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229';
     }
     /**
      * Validate configuration (required by base class)

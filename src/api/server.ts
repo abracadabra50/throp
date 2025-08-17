@@ -110,9 +110,25 @@ export class ApiServer {
    * Setup Express middleware
    */
   private setupMiddleware(): void {
-    // CORS configuration
+    // CORS configuration - allow multiple origins
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://throp.vercel.app',
+      'https://chat.throp.ai',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
     this.app.use(cors({
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(null, true); // Allow all origins for now
+        }
+      },
       credentials: true,
     }));
     
