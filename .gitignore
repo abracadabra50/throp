@@ -4,7 +4,7 @@ node_modules/
 .pnp.js
 
 # Production build
-dist/
+# dist/ # Temporarily disabled for Railway deployment
 build/
 
 # Environment variables

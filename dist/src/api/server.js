@@ -1,0 +1,421 @@
+/**
+ * REST API server for Throp bot
+ * Provides endpoints for web interface integration
+ */
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import { logger } from '../utils/logger.js';
+import { getConfig } from '../config.js';
+import { TwitterClient } from '../twitter/client.js';
+// import { createPerplexityChaosEngine } from '../engines/perplexity-chaos.js'; // Unused
+import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
+import { createTweetRoutes } from './tweet-endpoints.js';
+import { RedisCache } from '../cache/redis.js';
+/**
+ * Create and configure the API server
+ */
+export class ApiServer {
+    app;
+    server;
+    io;
+    port;
+    twitterClient = null;
+    answerEngine;
+    cache;
+    startTime;
+    constructor(port = 3001) {
+        this.port = port;
+        this.app = express();
+        this.server = createServer(this.app);
+        this.io = new SocketIOServer(this.server, {
+            cors: {
+                origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+                methods: ['GET', 'POST'],
+            },
+        });
+        this.startTime = new Date();
+        // Initialize services
+        // Only initialize Twitter client if not in API-only mode
+        const isApiOnly = process.env.API_ONLY_MODE === 'true';
+        if (!isApiOnly) {
+            try {
+                this.twitterClient = new TwitterClient();
+            }
+            catch (error) {
+                logger.warn('Twitter client initialization failed - Twitter features disabled', error);
+            }
+        }
+        this.answerEngine = createHybridClaudeEngine();
+        this.cache = new RedisCache();
+        this.setupMiddleware();
+        this.setupRoutes();
+        this.setupWebSocket();
+    }
+    /**
+     * Setup Express middleware
+     */
+    setupMiddleware() {
+        // CORS configuration
+        this.app.use(cors({
+            origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+            credentials: true,
+        }));
+        // Body parsing
+        this.app.use(express.json());
+        this.app.use(express.urlencoded({ extended: true }));
+        // Request logging
+        this.app.use((req, _res, next) => {
+            logger.debug(`${req.method} ${req.path}`, {
+                query: req.query,
+                body: req.body,
+            });
+            next();
+        });
+        // Error handling
+        this.app.use((err, _req, res, _next) => {
+            logger.error('API error', err);
+            res.status(500).json({
+                success: false,
+                error: err.message || 'Internal server error',
+            });
+        });
+    }
+    /**
+     * Setup API routes
+     */
+    setupRoutes() {
+        // Mount tweet routes
+        this.app.use('/api/tweet', createTweetRoutes());
+        // Health check (required for Railway deployment)
+        this.app.get('/health', (_req, res) => {
+            const health = {
+                status: 'ok',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime(),
+                service: 'throp-api',
+                version: process.env.npm_package_version || '0.2.1',
+                environment: process.env.NODE_ENV || 'development',
+                memory: {
+                    used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                    total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+                    unit: 'MB'
+                },
+                redis: this.cache ? 'connected' : 'not configured',
+                twitter: this.twitterClient ? 'initialized' : 'not configured',
+                answerEngine: this.answerEngine ? 'ready' : 'not configured',
+            };
+            // Return 503 if critical services are down
+            const httpStatus = health.status === 'ok' ? 200 : 503;
+            res.status(httpStatus).json(health);
+        });
+        // Bot status
+        this.app.get('/api/status', async (_req, res) => {
+            try {
+                const status = await this.getStatus();
+                res.json(status);
+            }
+            catch (error) {
+                res.status(500).json({
+                    status: 'error',
+                    error: error.message,
+                });
+            }
+        });
+        // Chat endpoint for web interface
+        this.app.post('/api/chat', async (req, res) => {
+            try {
+                const { message, context } = req.body;
+                if (!message) {
+                    res.status(400).json({
+                        success: false,
+                        error: 'Message is required',
+                    });
+                    return;
+                }
+                logger.info('Processing chat request', {
+                    messageLength: message.length,
+                    hasContext: !!context,
+                });
+                // Build answer context
+                const answerContext = {
+                    question: message,
+                    author: {
+                        username: context?.username || 'web_user',
+                        name: context?.username || 'Web User',
+                    },
+                };
+                // Add conversation history if provided
+                if (context?.conversationHistory?.length) {
+                    answerContext.conversation = {
+                        previousTweets: context.conversationHistory.map((msg, idx) => ({
+                            text: msg.content,
+                            author: msg.role === 'user' ? 'user' : 'throp',
+                            timestamp: new Date(Date.now() - (idx * 60000)), // Fake timestamps
+                        })),
+                    };
+                }
+                // Generate response using Hybrid Engine (Perplexity facts + Claude personality)
+                const response = await this.answerEngine.generateResponse(answerContext);
+                // Cache the interaction
+                await this.cache.cacheInteraction(message, response.text);
+                // Emit to WebSocket clients
+                this.io.emit('new_response', {
+                    question: message,
+                    response: response.text,
+                    timestamp: new Date().toISOString(),
+                });
+                res.json({
+                    success: true,
+                    response: response.text,
+                    citations: response.citations,
+                    threadParts: response.threadParts,
+                    metadata: response.metadata,
+                });
+            }
+            catch (error) {
+                logger.error('Chat request failed', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Get recent mentions (for dashboard)
+        this.app.get('/api/mentions', async (req, res) => {
+            try {
+                if (!this.twitterClient) {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'Twitter functionality not available in API-only mode',
+                    });
+                }
+                const limit = parseInt(req.query.limit) || 10;
+                const mentions = await this.twitterClient.getMentions(undefined, limit);
+                return res.json({
+                    success: true,
+                    mentions: mentions.map(m => ({
+                        id: m.id,
+                        text: m.text,
+                        author: m.authorUsername,
+                        createdAt: m.createdAt,
+                        processed: m.processed,
+                        response: m.response,
+                    })),
+                });
+            }
+            catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Process a specific mention
+        this.app.post('/api/mentions/:id/process', async (req, res) => {
+            try {
+                if (!this.twitterClient) {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'Twitter functionality not available in API-only mode',
+                    });
+                }
+                const { id } = req.params;
+                const { dryRun = false } = req.body;
+                logger.info(`Processing mention ${id}`, { dryRun });
+                // Get the tweet
+                const tweet = await this.twitterClient.getTweet(id);
+                // Build context
+                const context = {
+                    question: tweet.text,
+                    author: {
+                        username: 'twitter_user',
+                    },
+                };
+                // Generate response
+                const response = await this.answerEngine.generateResponse(context);
+                // Post reply if not dry run
+                let replyId;
+                if (!dryRun) {
+                    const reply = await this.twitterClient.reply(response.text, id);
+                    replyId = reply.id;
+                }
+                return res.json({
+                    success: true,
+                    response: response.text,
+                    replyId,
+                    dryRun,
+                });
+            }
+            catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Get cached interactions
+        this.app.get('/api/cache/interactions', async (req, res) => {
+            try {
+                const limit = parseInt(req.query.limit) || 100;
+                const interactions = await this.cache.getRecentInteractions(limit);
+                res.json({
+                    success: true,
+                    interactions,
+                });
+            }
+            catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Clear cache
+        this.app.post('/api/cache/clear', async (_req, res) => {
+            try {
+                await this.cache.clear();
+                res.json({
+                    success: true,
+                    message: 'Cache cleared successfully',
+                });
+            }
+            catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+    }
+    /**
+     * Setup WebSocket for real-time updates
+     */
+    setupWebSocket() {
+        this.io.on('connection', (socket) => {
+            logger.info('WebSocket client connected', { id: socket.id });
+            // Send initial status
+            this.getStatus().then(status => {
+                socket.emit('status', status);
+            });
+            // Handle chat messages via WebSocket
+            socket.on('chat', async (data) => {
+                try {
+                    const context = {
+                        question: data.message,
+                        author: {
+                            username: data.context?.username || 'socket_user',
+                        },
+                    };
+                    const response = await this.answerEngine.generateResponse(context);
+                    socket.emit('response', {
+                        success: true,
+                        response: response.text,
+                        citations: response.citations,
+                    });
+                    // Broadcast to other clients
+                    socket.broadcast.emit('new_response', {
+                        question: data.message,
+                        response: response.text,
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+                catch (error) {
+                    socket.emit('error', {
+                        message: error.message,
+                    });
+                }
+            });
+            socket.on('disconnect', () => {
+                logger.info('WebSocket client disconnected', { id: socket.id });
+            });
+        });
+    }
+    /**
+     * Get server status
+     */
+    async getStatus() {
+        const config = getConfig();
+        const uptime = Date.now() - this.startTime.getTime();
+        // Check Twitter connection
+        let twitterConnected = false;
+        let rateLimitRemaining;
+        if (this.twitterClient) {
+            try {
+                const rateLimits = this.twitterClient.getRateLimitStatus();
+                twitterConnected = true;
+                rateLimitRemaining = rateLimits.get('mentions')?.remaining;
+            }
+            catch (error) {
+                logger.debug('Twitter status check failed', error);
+            }
+        }
+        // Check Perplexity connection
+        let perplexityConnected = false;
+        try {
+            await this.answerEngine.validate();
+            perplexityConnected = true;
+        }
+        catch (error) {
+            logger.debug('Perplexity status check failed', error);
+        }
+        // Check Redis connection
+        const redisConnected = await this.cache.isConnected();
+        // Get stats from cache
+        const stats = await this.cache.getStats();
+        return {
+            status: 'online',
+            version: '0.2.0',
+            twitter: {
+                connected: twitterConnected,
+                username: config.twitter.botUsername,
+                rateLimitRemaining,
+            },
+            perplexity: {
+                connected: perplexityConnected,
+                model: config.perplexity.model,
+            },
+            redis: {
+                connected: redisConnected,
+            },
+            stats: {
+                ...stats,
+                uptime,
+            },
+        };
+    }
+    /**
+     * Start the API server
+     */
+    async start() {
+        // Initialize services
+        await this.cache.connect();
+        await this.answerEngine.validate();
+        // Start server
+        this.server.listen(this.port, () => {
+            logger.success(`API server started on port ${this.port}`);
+            logger.info(`WebSocket server available at ws://localhost:${this.port}`);
+            logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+        });
+    }
+    /**
+     * Stop the API server
+     */
+    async stop() {
+        return new Promise((resolve) => {
+            this.io.close();
+            this.server.close(() => {
+                logger.info('API server stopped');
+                resolve();
+            });
+        });
+    }
+}
+/**
+ * Create and export API server instance
+ */
+export function createApiServer(port) {
+    return new ApiServer(port);
+}
+//# sourceMappingURL=server.js.map

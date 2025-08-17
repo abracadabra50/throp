@@ -1,0 +1,1 @@
+{"version":3,"file":"tweet-endpoints.d.ts","sourceRoot":"","sources":["../../../src/api/tweet-endpoints.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AA+BjC;;GAEG;AACH,wBAAgB,iBAAiB,IAAI,MAAM,CAoT1C;AAGD,OAAO,QAAQ,sBAAsB,CAAC;IACpC,UAAU,aAAa;QACrB,KAAK,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,CAAC,GAAG,CAAC,CAAC;KACnC;CACF"}
