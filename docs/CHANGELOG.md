@@ -61,6 +61,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More accurate information about trending topics and viral content
 - Seamless integration with existing Perplexity + Claude pipeline
 
+## [0.4.7] - 2025-08-17
+
+### Enhanced - Dynamic Trending Prompts
+- **Live Trending Prompts**: Homepage now shows real-time trending conversation starters
+  - Uses same Claude-powered system as hot takes
+  - Automatically generates prompts based on current events
+  - Updates hourly with fresh, relevant topics
+  - Refresh button to manually update prompts
+  - Falls back to curated prompts if API unavailable
+- **Unified Trending System**: Both hot takes and prompts now use same trending engine
+- **Better User Engagement**: Prompts are now contextually relevant to the week's events
+
 ## [0.4.6] - 2025-08-17
 
 ### Added - About Page & Roadmap
@@ -69,11 +81,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Powered by $throp token (contract address section)
   - Feature roadmap/backlog with upcoming features
   - Removed tech stack section per request
+  - Added image upload to backlog
 - **Roadmap Features**: Public backlog with completed and planned features
   - ✅ Completed: Twitter integration (@askthrop mentions)
   - ✅ Completed: Reply mode on X platform
   - ✅ Completed: Multi-lingual support (50+ languages)
-  - Upcoming: Meme generator, voice mode, image understanding
+  - Upcoming: Meme generator, voice mode, image understanding, image upload
   - Upcoming: Group chats, gaming mode, mobile app, memory system
 - **Navigation**: Added about links to headers
 - **Homepage Enhancement**: Added quick chat input field under trending prompts

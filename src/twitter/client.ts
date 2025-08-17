@@ -38,6 +38,13 @@ export class TwitterClient {
     // Initialize Twitter client with OAuth2 Bearer Token if available
     const bearerToken = this.config.twitter.bearerToken || process.env.TWITTER_BEARER_TOKEN;
     
+    logger.info('Twitter client initialization:', {
+      hasBearerToken: !!bearerToken,
+      hasBotUserId: !!this.config.twitter.botUserId,
+      botUserId: this.config.twitter.botUserId || 'NOT SET',
+      bearerTokenLength: bearerToken ? bearerToken.length : 0,
+    });
+    
     if (bearerToken) {
       // Use Bearer Token for better API access (OAuth 2.0)
       this.client = new TwitterApi(bearerToken);
@@ -86,6 +93,14 @@ export class TwitterClient {
     maxResults: number = 100
   ): Promise<TwitterMention[]> {
     const endLog = logger.time('Fetching mentions');
+    
+    // Check if bot user ID is set
+    if (!this.config.twitter.botUserId) {
+      logger.error('TWITTER_BOT_USER_ID is not set! Cannot fetch mentions.');
+      throw new Error('Bot user ID is required to fetch mentions. Set TWITTER_BOT_USER_ID environment variable.');
+    }
+    
+    logger.info(`Fetching mentions for bot user ID: ${this.config.twitter.botUserId}`);
     
     try {
       const mentions = await this.executeWithRetry(async () => {

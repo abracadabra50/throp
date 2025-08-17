@@ -40,6 +40,18 @@ export default function Home() {
   
   // Random values for prompt buttons (7 prompts)
   const [promptRotations, setPromptRotations] = useState<number[]>([]);
+  
+  // Trending prompts from API
+  const [trendingPrompts, setTrendingPrompts] = useState<string[]>([
+    // Default prompts while loading
+    "loading trending topics...",
+    "fetching hot takes...",
+    "checking the vibes...",
+    "scanning twitter...",
+    "reading the room...",
+    "getting the tea...",
+    "finding the drama..."
+  ]);
 
   // Load saved messages from localStorage and set random offsets
   useEffect(() => {
@@ -74,7 +86,34 @@ export default function Home() {
         console.error('Failed to load saved messages');
       }
     }
+
+    // Fetch trending prompts
+    fetchTrendingPrompts();
   }, []);
+
+  // Fetch trending prompts from API
+  const fetchTrendingPrompts = async () => {
+    try {
+      const response = await fetch('/api/trending-prompts');
+      const data = await response.json();
+      if (data.prompts && Array.isArray(data.prompts)) {
+        setTrendingPrompts(data.prompts);
+        console.log('Loaded trending prompts:', data.prompts);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trending prompts:', error);
+      // Keep default prompts on error
+      setTrendingPrompts([
+        "whats the drama with the bags app",
+        "explain why everything costs so much",
+        "is solana still a thing or nah",
+        "roast my investment choices",
+        "why is gta6 taking forever fr",
+        "decode gen z slang for millennials",
+        "hot takes on the heatwave"
+      ]);
+    }
+  };
 
   // Save messages to localStorage and generate random rotations for new messages
   useEffect(() => {
@@ -412,17 +451,23 @@ export default function Home() {
 
           {/* Quick prompts */}
           <div className="mb-12">
-            <h2 className="text-sm font-semibold mb-4 text-gray-600 uppercase tracking-wide">trending prompts rn</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                trending prompts rn 
+                <span className="text-xs normal-case ml-2 text-gray-400">
+                  (live from the timeline)
+                </span>
+              </h2>
+              <button
+                onClick={fetchTrendingPrompts}
+                className="text-xs px-2 py-1 hover:bg-gray-100 rounded transition-all"
+                title="Refresh trending prompts"
+              >
+                🔄
+              </button>
+            </div>
             <div className="flex flex-wrap gap-3">
-              {[
-                "whats the bags app / thread guy drama",
-                "explain why everything costs so much",
-                "is solana still a thing or nah",
-                "roast my investment choices",
-                "why is gta6 taking forever fr",
-                "decode gen z slang for millennials",
-                "hot takes on the heatwave"
-              ].map((prompt, index) => (
+              {trendingPrompts.map((prompt, index) => (
                 <button
                   key={prompt}
                   onClick={() => {
