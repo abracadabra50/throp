@@ -6,8 +6,9 @@ WORKDIR /app
 # Copy everything including built dist folder
 COPY . .
 
-# Install only production dependencies
-RUN npm ci --production --no-audit --no-fund || \
+# Skip prepare script (husky) and install only production dependencies
+RUN npm pkg delete scripts.prepare && \
+    npm ci --production --no-audit --no-fund || \
     (npm cache clean --force && npm ci --production --no-audit --no-fund)
 
 # Expose port
