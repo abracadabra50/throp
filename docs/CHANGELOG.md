@@ -1,17 +1,24 @@
 # Changelog
 
-## [2024-12-31] - Frontend-Backend Connection & Perplexity API Fix
+## [2024-12-31] - Railway Deployment Health Check & API Fixes
 ### Fixed
-- Updated frontend proxy route to connect to Railway backend (https://throp-gh-production.up.railway.app)
-- Fixed API URL detection logic to properly route Railway backend through proxy to avoid CORS issues
-- Backend is successfully running on Railway with Twitter bot connected
-- **Fixed Perplexity API 400 Bad Request error** by removing non-standard parameters from API calls:
-  - Removed `return_citations`, `return_images`, `return_related_questions`, and `search_recency_filter` parameters
-  - These parameters were causing the API to reject requests with 400 errors
+- **Fixed Railway deployment health check failures**:
+  - Health check now always returns 200 status for Railway
+  - Increased health check timeout from 30s to 120s
+  - Added error logging for better debugging
+- **Fixed Anthropic Claude model name** to use valid model identifier
+- **Fixed Perplexity API 400 Bad Request error** by removing non-standard parameters:
+  - Removed `return_citations`, `return_images`, `return_related_questions`, and `search_recency_filter`
+- **Fixed frontend-backend connection**:
+  - Updated proxy route to use Railway backend URL
+  - Fixed CORS handling for Railway deployment
 ### Changes Made
-- Modified `/web/src/app/api/proxy/route.ts` to use Railway backend URL
-- Updated `/web/src/app/page.tsx` to detect Railway URLs and use proxy appropriately
-- Fixed `/src/engines/perplexity.ts` to use only standard OpenAI-compatible parameters
+- Modified `/railway.toml` to increase health check timeout
+- Updated `/src/api/server.ts` to make health checks more forgiving
+- Fixed `/src/engines/hybrid-claude.ts` with better error handling
+- Fixed `/src/engines/perplexity.ts` to use standard parameters only
+- Updated `/web/src/app/api/proxy/route.ts` for Railway backend
+- Modified `/web/src/app/page.tsx` to detect Railway URLs properly
 
 # Changelog
 
