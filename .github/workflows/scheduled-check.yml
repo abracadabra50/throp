@@ -1,0 +1,49 @@
+name: Scheduled Health Check
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  health-check:
+    name: Check Bot Health
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check API Health
+        id: health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://throp.up.railway.app/health)
+          if [ $response -eq 200 ]; then
+            echo "✅ Bot is healthy"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Bot is down! HTTP: $response"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Check Twitter Activity
+        if: success()
+        env:
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+        run: |
+          # Check if bot has been active in last 24 hours
+          curl -H "X-Admin-Key: $ADMIN_API_KEY" \
+               https://throp.up.railway.app/api/status | \
+               jq '.lastActivity'
+      
+      - name: Notify on Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Bot Health Check Failed',
+              body: `The scheduled health check failed at ${new Date().toISOString()}\n\nPlease check Railway logs.`,
+              labels: ['bug', 'urgent']
+            })

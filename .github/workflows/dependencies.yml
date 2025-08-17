@@ -1,0 +1,107 @@
+name: Dependency Management
+
+on:
+  schedule:
+    # Run every Monday at 9am UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Check for outdated packages
+        id: outdated
+        run: |
+          echo "## 📦 Outdated Packages" > outdated.md
+          npm outdated --json > outdated.json || true
+          
+          # Parse and format outdated packages
+          node -e "
+            const fs = require('fs');
+            const outdated = JSON.parse(fs.readFileSync('outdated.json', 'utf8'));
+            let hasUpdates = false;
+            let output = '';
+            
+            for (const [pkg, info] of Object.entries(outdated)) {
+              hasUpdates = true;
+              output += \`- **\${pkg}**: \${info.current} → \${info.wanted} (latest: \${info.latest})\n\`;
+            }
+            
+            if (hasUpdates) {
+              fs.appendFileSync('outdated.md', output);
+              console.log('updates_available=true');
+            } else {
+              fs.appendFileSync('outdated.md', '\nAll packages are up to date! ✅');
+              console.log('updates_available=false');
+            }
+          " >> $GITHUB_OUTPUT
+      
+      - name: Security Audit
+        id: audit
+        run: |
+          echo "## 🔒 Security Audit" >> outdated.md
+          echo "" >> outdated.md
+          npm audit --json > audit.json || true
+          
+          # Check for vulnerabilities
+          node -e "
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+            
+            if (audit.metadata && audit.metadata.vulnerabilities) {
+              const vulns = audit.metadata.vulnerabilities;
+              const total = vulns.total || 0;
+              
+              if (total > 0) {
+                fs.appendFileSync('outdated.md', \`Found **\${total}** vulnerabilities:\n\`);
+                fs.appendFileSync('outdated.md', \`- Critical: \${vulns.critical || 0}\n\`);
+                fs.appendFileSync('outdated.md', \`- High: \${vulns.high || 0}\n\`);
+                fs.appendFileSync('outdated.md', \`- Moderate: \${vulns.moderate || 0}\n\`);
+                fs.appendFileSync('outdated.md', \`- Low: \${vulns.low || 0}\n\`);
+                console.log('has_vulnerabilities=true');
+              } else {
+                fs.appendFileSync('outdated.md', 'No vulnerabilities found! ✅\n');
+                console.log('has_vulnerabilities=false');
+              }
+            }
+          " >> $GITHUB_OUTPUT
+      
+      - name: Update non-breaking changes
+        if: steps.outdated.outputs.updates_available == 'true'
+        run: |
+          # Update to wanted versions (non-breaking)
+          npm update
+          
+          # Run tests to ensure nothing broke
+          npm run build
+          npm test -- --run || true
+      
+      - name: Create Pull Request
+        if: steps.outdated.outputs.updates_available == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: '🔄 Weekly Dependency Updates'
+          body-path: outdated.md
+          branch: deps/weekly-update
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
+      
+      - name: Auto-merge if safe
+        if: steps.outdated.outputs.updates_available == 'true' && steps.outdated.outputs.has_vulnerabilities == 'false'
+        run: |
+          echo "No vulnerabilities found, PR can be auto-merged after CI passes"

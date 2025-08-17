@@ -1,0 +1,92 @@
+name: Code Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: TypeScript Check
+        run: |
+          echo "## 📝 TypeScript Check" >> quality-report.md
+          npm run lint 2>&1 | tee -a quality-report.md || true
+          echo "" >> quality-report.md
+      
+      - name: Check Code Formatting
+        run: |
+          echo "## 🎨 Code Formatting" >> quality-report.md
+          npx prettier --check "src/**/*.{ts,tsx,js,jsx}" 2>&1 | tee -a quality-report.md || true
+          echo "" >> quality-report.md
+      
+      - name: Check for Console Logs
+        run: |
+          echo "## 🔍 Console Log Check" >> quality-report.md
+          grep -r "console\.\(log\|debug\|info\)" src/ --include="*.ts" --include="*.tsx" | head -20 >> quality-report.md || echo "No console logs found ✅" >> quality-report.md
+          echo "" >> quality-report.md
+      
+      - name: Check Bundle Size
+        run: |
+          echo "## 📦 Build Analysis" >> quality-report.md
+          npm run build
+          echo "### Build Output Size:" >> quality-report.md
+          du -sh dist/ >> quality-report.md
+          echo "" >> quality-report.md
+          echo "### Largest Files:" >> quality-report.md
+          find dist -type f -exec du -h {} + | sort -rh | head -10 >> quality-report.md
+      
+      - name: Complexity Analysis
+        run: |
+          echo "## 🧮 Code Complexity" >> quality-report.md
+          # Count lines of code
+          echo "### Lines of Code:" >> quality-report.md
+          find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1 >> quality-report.md
+          echo "" >> quality-report.md
+          
+          # Check for long files
+          echo "### Files over 300 lines:" >> quality-report.md
+          find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn | head -10 >> quality-report.md
+      
+      - name: Check for Sensitive Data
+        run: |
+          echo "## 🔐 Security Check" >> quality-report.md
+          
+          # Check for hardcoded API keys
+          patterns="(api[_-]?key|apikey|api[_-]?secret|password|token|secret[_-]?key)"
+          
+          if grep -rEi "$patterns" src/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules; then
+            echo "⚠️ Potential sensitive data found!" >> quality-report.md
+          else
+            echo "No hardcoded secrets detected ✅" >> quality-report.md
+          fi
+      
+      - name: Comment PR with Report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('quality-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `# 📊 Code Quality Report\n\n${report}`
+            })
