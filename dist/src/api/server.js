@@ -469,10 +469,18 @@ export class ApiServer {
             logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
             // Start polling for mentions if Twitter is configured and enabled
             const enablePolling = process.env.ENABLE_MENTION_POLLING !== 'false';
-            if (this.twitterClient && !process.env.API_ONLY_MODE && enablePolling) {
+            const apiOnlyMode = process.env.API_ONLY_MODE === 'true';
+            if (this.twitterClient && !apiOnlyMode && enablePolling) {
                 // Start polling even without Redis (will use in-memory tracking)
                 logger.info('Starting mention polling (Redis optional for persistence)');
                 this.startMentionPolling();
+            }
+            else {
+                logger.info('Mention polling disabled', {
+                    hasTwitter: !!this.twitterClient,
+                    apiOnlyMode,
+                    enablePolling
+                });
             }
         });
     }
