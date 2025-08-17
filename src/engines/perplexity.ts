@@ -210,10 +210,6 @@ When discussing crypto/markets, always check current prices and on-chain data.`;
           max_tokens: this.maxTokens,
           temperature: this.temperature,
           top_p: 0.9,
-          return_citations: true,
-          return_images: false,
-          return_related_questions: false,
-          search_recency_filter: 'month', // Focus on recent information
           stream: false,
         },
         timeout: 30000, // 30 second timeout

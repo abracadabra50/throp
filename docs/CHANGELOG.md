@@ -1,16 +1,17 @@
 # Changelog
 
-## [2024-12-31] - Frontend-Backend Connection Fix
+## [2024-12-31] - Frontend-Backend Connection & Perplexity API Fix
 ### Fixed
 - Updated frontend proxy route to connect to Railway backend (https://throp-gh-production.up.railway.app)
 - Fixed API URL detection logic to properly route Railway backend through proxy to avoid CORS issues
 - Backend is successfully running on Railway with Twitter bot connected
-### Issues Identified
-- Perplexity API returning 400 Bad Request errors (needs API key/configuration check on Railway)
-- Twitter mentions endpoint returning 401 errors when accessed directly
+- **Fixed Perplexity API 400 Bad Request error** by removing non-standard parameters from API calls:
+  - Removed `return_citations`, `return_images`, `return_related_questions`, and `search_recency_filter` parameters
+  - These parameters were causing the API to reject requests with 400 errors
 ### Changes Made
 - Modified `/web/src/app/api/proxy/route.ts` to use Railway backend URL
 - Updated `/web/src/app/page.tsx` to detect Railway URLs and use proxy appropriately
+- Fixed `/src/engines/perplexity.ts` to use only standard OpenAI-compatible parameters
 
 # Changelog
 
