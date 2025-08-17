@@ -22,10 +22,17 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ message }), // API expects { message: string }
     });
 
+    // Check response status first
+    if (!response.ok) {
+      console.error('Backend returned error status:', response.status);
+      throw new Error(`Backend returned ${response.status}`);
+    }
+    
     // Get the JSON response
     const data = await response.json();
     
-    if (!response.ok || !data.success) {
+    if (!data.success) {
+      console.error('Backend returned failure:', data);
       throw new Error(data.error || 'API request failed');
     }
     
