@@ -1,0 +1,44 @@
+# COPY THESE TO RAILWAY DASHBOARD
+# Go to: https://railway.com/project/65d391d5-53d6-4ba3-b110-f61926306f0a
+# Click on "enthusiastic-creation" service → Variables tab → Add all of these
+
+# ============================================
+# REQUIRED - Twitter API Configuration
+# ============================================
+TWITTER_API_KEY=
+TWITTER_API_SECRET_KEY=
+TWITTER_ACCESS_TOKEN=
+TWITTER_ACCESS_TOKEN_SECRET=
+TWITTER_USERNAME=askthrop
+
+# ============================================
+# REQUIRED - AI Configuration
+# ============================================
+ANTHROPIC_API_KEY=
+PERPLEXITY_API_KEY=
+
+# ============================================
+# REQUIRED - Redis (Railway will auto-set this)
+# ============================================
+# REDIS_URL will be automatically set by Railway when you reference the Redis service
+
+# ============================================
+# REQUIRED - Application Settings
+# ============================================
+NODE_ENV=production
+PORT=3001
+
+# ============================================
+# OPTIONAL - Feature Configuration
+# ============================================
+CHAOS_LEVEL=7
+ENABLE_PROACTIVE_TWEETS=false
+ENABLE_QUOTE_MONITOR=false
+ENABLE_WEBSOCKET=true
+MAX_TWEETS_PER_HOUR=10
+MAX_MENTIONS_PER_CHECK=20
+
+# ============================================
+# OPTIONAL - Monitoring
+# ============================================
+# SENTRY_DSN=your_sentry_dsn_if_you_have_one

@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for Throp
-# Supports both API server and Twitter bot modes
+# Optimized for Railway Pro Plan
 
 # Build stage
 FROM node:20-alpine AS builder
@@ -9,14 +9,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies with reduced memory usage
-RUN npm ci --maxsockets 1
+# Install all dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build TypeScript with memory limit
-RUN NODE_OPTIONS="--max-old-space-size=512" npm run build
+# Build TypeScript
+RUN npm run build
 
 # Production stage
 FROM node:20-alpine
@@ -39,7 +39,6 @@ RUN npm ci --production && \
 
 # Copy built application from builder
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/env.example ./env.example
 
 # Switch to non-root user
 USER nodejs
@@ -50,5 +49,5 @@ EXPOSE 3001
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Default to API server (can be overridden)
-CMD ["npm", "run", "start:api"]
+# Default to API server
+CMD ["node", "dist/api/server.js"]
