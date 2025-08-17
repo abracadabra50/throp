@@ -25,6 +25,9 @@ export class ApiServer {
     answerEngine;
     cache;
     startTime;
+    mentionPollingInterval = null;
+    processedMentions = new Set();
+    lastMentionId;
     constructor(port = 3001) {
         this.port = port;
         this.app = express();
@@ -443,6 +446,8 @@ export class ApiServer {
             try {
                 await this.cache.connect();
                 logger.info('Redis cache connected');
+                // Load processed mentions from cache
+                await this.loadProcessedMentions();
             }
             catch (error) {
                 logger.warn('Redis cache connection failed - caching disabled', error);
@@ -462,12 +467,139 @@ export class ApiServer {
             logger.success(`API server started on port ${this.port}`);
             logger.info(`WebSocket server available at ws://localhost:${this.port}`);
             logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+            // Start polling for mentions if Twitter is configured and enabled
+            const enablePolling = process.env.ENABLE_MENTION_POLLING !== 'false';
+            if (this.twitterClient && !process.env.API_ONLY_MODE && enablePolling) {
+                this.startMentionPolling();
+            }
         });
+    }
+    /**
+     * Start polling for Twitter mentions
+     */
+    startMentionPolling() {
+        const config = getConfig();
+        // Use environment variable or default based on API plan
+        const defaultInterval = config.twitter.apiPlan === 'pro' ? 30000 : 60000;
+        const pollInterval = parseInt(process.env.MENTION_POLL_INTERVAL || String(defaultInterval));
+        logger.info(`Starting mention polling every ${pollInterval / 1000} seconds (${config.twitter.apiPlan} plan)`);
+        // Initial check
+        this.checkAndProcessMentions();
+        // Set up interval
+        this.mentionPollingInterval = setInterval(() => {
+            this.checkAndProcessMentions();
+        }, pollInterval);
+    }
+    /**
+     * Check for new mentions and process them
+     */
+    async checkAndProcessMentions() {
+        if (!this.twitterClient || !this.answerEngine) {
+            logger.debug('Skipping mention check - services not available');
+            return;
+        }
+        try {
+            logger.debug('Checking for new mentions...');
+            // Get mentions since the last one we processed
+            const mentions = await this.twitterClient.getMentions(this.lastMentionId, 20);
+            if (mentions.length === 0) {
+                logger.debug('No new mentions found');
+                return;
+            }
+            logger.info(`Found ${mentions.length} mentions to process`);
+            // Process each mention
+            for (const mention of mentions) {
+                // Skip if already processed
+                if (this.processedMentions.has(mention.id)) {
+                    logger.debug(`Skipping already processed mention ${mention.id}`);
+                    continue;
+                }
+                try {
+                    logger.info(`Processing mention from @${mention.authorUsername}: "${mention.text.substring(0, 50)}..."`);
+                    // Generate response using the hybrid engine
+                    const answerContext = {
+                        question: mention.text,
+                        author: {
+                            username: mention.authorUsername || 'unknown',
+                        },
+                    };
+                    const engineResponse = await this.answerEngine.generateResponse(answerContext);
+                    // Reply to the tweet
+                    await this.twitterClient.reply(engineResponse.text, mention.id);
+                    // Mark as processed
+                    this.processedMentions.add(mention.id);
+                    // Update last mention ID
+                    if (!this.lastMentionId || mention.id > this.lastMentionId) {
+                        this.lastMentionId = mention.id;
+                    }
+                    // Save to cache if available
+                    if (this.cache) {
+                        await this.saveProcessedMentions();
+                    }
+                    logger.success(`Replied to mention ${mention.id} from @${mention.authorUsername}`);
+                    // Small delay between replies to avoid rate limits
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                catch (error) {
+                    logger.error(`Failed to process mention ${mention.id}`, error);
+                }
+            }
+        }
+        catch (error) {
+            logger.error('Failed to check mentions', error);
+        }
+    }
+    /**
+     * Load processed mentions from cache
+     */
+    async loadProcessedMentions() {
+        if (!this.cache)
+            return;
+        try {
+            const cached = await this.cache.get('throp:processed_mentions');
+            if (cached) {
+                const data = JSON.parse(cached);
+                this.processedMentions = new Set(data.mentions || []);
+                this.lastMentionId = data.lastId;
+                logger.info(`Loaded ${this.processedMentions.size} processed mentions from cache`);
+            }
+        }
+        catch (error) {
+            logger.warn('Failed to load processed mentions from cache', error);
+        }
+    }
+    /**
+     * Save processed mentions to cache
+     */
+    async saveProcessedMentions() {
+        if (!this.cache)
+            return;
+        try {
+            // Keep only last 1000 processed IDs
+            const mentionArray = Array.from(this.processedMentions).slice(-1000);
+            await this.cache.set('throp:processed_mentions', JSON.stringify({
+                mentions: mentionArray,
+                lastId: this.lastMentionId,
+            }), 7 * 24 * 60 * 60); // 7 days TTL
+        }
+        catch (error) {
+            logger.warn('Failed to save processed mentions to cache', error);
+        }
     }
     /**
      * Stop the API server
      */
     async stop() {
+        // Stop mention polling
+        if (this.mentionPollingInterval) {
+            clearInterval(this.mentionPollingInterval);
+            this.mentionPollingInterval = null;
+            logger.info('Stopped mention polling');
+        }
+        // Save processed mentions before shutting down
+        if (this.cache) {
+            await this.saveProcessedMentions();
+        }
         return new Promise((resolve) => {
             this.io.close();
             this.server.close(() => {

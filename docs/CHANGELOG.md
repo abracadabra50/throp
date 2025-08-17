@@ -1,6 +1,6 @@
 # Changelog
 
-## [2025-08-17] - Claude Model Update & OAuth2 Support
+## [2025-08-17] - Claude Model Update & OAuth2 Support + Real-time Mentions
 ### Fixed
 - Updated Claude model to `claude-sonnet-4-20250514` as specified
 - Model now uses exact string as requested
@@ -12,6 +12,13 @@
 - Automatic detection and use of Bearer Token when available
 - Bot User ID configuration for mentions endpoint
 - Better authentication fallback (OAuth 2.0 → OAuth 1.0a)
+- **Real-time mention polling system**:
+  - Automatic polling every 60 seconds (basic) or 30 seconds (pro)
+  - Configurable via MENTION_POLL_INTERVAL environment variable
+  - Tracks processed mentions to avoid duplicates
+  - Redis cache persistence for processed mentions
+  - Automatic replies using hybrid Claude engine
+  - Rate limit aware with delays between replies
 
 ## [2024-12-31] - Subdomain Support & Complete API Fixes
 ### Fixed

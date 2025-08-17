@@ -14,6 +14,9 @@ export declare class ApiServer {
     private answerEngine;
     private cache;
     private startTime;
+    private mentionPollingInterval;
+    private processedMentions;
+    private lastMentionId;
     constructor(port?: number);
     /**
      * Setup Express middleware
@@ -35,6 +38,22 @@ export declare class ApiServer {
      * Start the API server
      */
     start(): Promise<void>;
+    /**
+     * Start polling for Twitter mentions
+     */
+    private startMentionPolling;
+    /**
+     * Check for new mentions and process them
+     */
+    private checkAndProcessMentions;
+    /**
+     * Load processed mentions from cache
+     */
+    private loadProcessedMentions;
+    /**
+     * Save processed mentions to cache
+     */
+    private saveProcessedMentions;
     /**
      * Stop the API server
      */
