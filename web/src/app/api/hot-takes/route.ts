@@ -1,0 +1,376 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
+import { chaosTransform } from '@/utils/chaos-formatter';
+
+// Initialize Anthropic (will use ANTHROPIC_API_KEY from env)
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+});
+
+// Initialize Twitter client
+async function getTwitterClient() {
+  try {
+    // Dynamically import to avoid initialization errors
+    const { TwitterApi } = await import('twitter-api-v2');
+    
+    // Check parent directory's .env for Twitter credentials
+    const apiKey = process.env.TWITTER_API_KEY || process.env.X_API_KEY;
+    const apiSecret = process.env.TWITTER_API_SECRET_KEY || process.env.X_API_SECRET;
+    const accessToken = process.env.TWITTER_ACCESS_TOKEN || process.env.X_ACCESS_TOKEN;
+    const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.X_ACCESS_TOKEN_SECRET;
+    const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+    
+    // Try bearer token first (simpler, read-only)
+    if (bearerToken) {
+      console.log('Using Twitter Bearer Token for trends');
+      return new TwitterApi(bearerToken);
+    }
+    
+    // Fall back to OAuth 1.0a
+    if (apiKey && apiSecret && accessToken && accessTokenSecret) {
+      console.log('Using Twitter OAuth 1.0a for trends');
+      return new TwitterApi({
+        appKey: apiKey,
+        appSecret: apiSecret,
+        accessToken: accessToken,
+        accessSecret: accessTokenSecret,
+      });
+    }
+    
+    console.log('No Twitter credentials found, will use mock data');
+    return null;
+  } catch (error) {
+    console.error('Error loading Twitter client:', error);
+    return null;
+  }
+}
+
+// Fetch trending topics (currently using realistic mocks, X API integration pending)
+async function getRealTrends() {
+  // Try to get Claude to suggest what might be trending
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const prompt = `Today is ${dateStr}. What are likely 5 trending topics on Twitter/X right now in August 2025?
+Consider: summer heat, tech news, entertainment, crypto, back-to-school season, politics, gaming.
+Return ONLY a JSON array like this, no other text:
+[{"name":"Topic Name","volume":"XXXk posts","context":"Brief context","category":"tech/news/entertainment/crypto/sports"}]`;
+      
+      const anthropicClient = createAnthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY || '',
+      });
+      
+      const { text } = await generateText({
+        model: anthropicClient(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
+        prompt,
+        temperature: 0.7,
+        maxTokens: 300,
+      });
+      
+      try {
+        const trends = JSON.parse(text.trim());
+        if (Array.isArray(trends) && trends.length > 0) {
+          console.log('Claude suggested trending topics:', trends.map(t => t.name).join(', '));
+          return trends.slice(0, 5);
+        }
+      } catch (parseError) {
+        console.log('Could not parse Claude trends, using fallback');
+      }
+    } catch (error) {
+      console.log('Error getting Claude trends:', error);
+    }
+  }
+  
+  // Fallback to mock trends
+  console.log('Using mock trending topics for August 2025');
+  return getMockTrends();
+}
+
+// Categorise trends based on keywords
+function categoriseTrend(name: string): string {
+  const lower = name.toLowerCase();
+  
+  if (lower.includes('crypto') || lower.includes('bitcoin') || lower.includes('eth') || lower.includes('nft')) {
+    return 'crypto';
+  }
+  if (lower.includes('game') || lower.includes('xbox') || lower.includes('playstation') || lower.includes('nintendo')) {
+    return 'gaming';
+  }
+  if (lower.includes('nfl') || lower.includes('nba') || lower.includes('soccer') || lower.includes('football')) {
+    return 'sports';
+  }
+  if (lower.includes('election') || lower.includes('president') || lower.includes('congress') || lower.includes('senate')) {
+    return 'politics';
+  }
+  if (lower.includes('movie') || lower.includes('netflix') || lower.includes('disney') || lower.includes('music')) {
+    return 'entertainment';
+  }
+  if (lower.includes('ai') || lower.includes('tech') || lower.includes('apple') || lower.includes('google')) {
+    return 'tech';
+  }
+  
+  return 'news';
+}
+
+// More realistic current trending topics (August 2025)
+const getMockTrends = () => {
+  const currentTopics = [
+    { 
+      name: 'Barbenheimer Anniversary', 
+      volume: '456K posts',
+      context: 'One year since the cultural phenomenon',
+      category: 'entertainment'
+    },
+    { 
+      name: 'GPT-5 Release', 
+      volume: '892K posts',
+      context: 'OpenAI announces GPT-5 with AGI capabilities',
+      category: 'tech'
+    },
+    { 
+      name: 'Drake vs Kendrick', 
+      volume: '567K posts',
+      context: 'New diss tracks dropped overnight',
+      category: 'entertainment'
+    },
+    { 
+      name: 'Heat Wave', 
+      volume: '445K posts',
+      context: 'Record breaking temperatures across US',
+      category: 'news'
+    },
+    { 
+      name: 'Solana at $500', 
+      volume: '678K posts',
+      context: 'SOL price pumping to new ATH',
+      category: 'crypto'
+    },
+    { 
+      name: 'Marvel Phase 7', 
+      volume: '234K posts',
+      context: 'New MCU phase announced at Comic Con',
+      category: 'entertainment'
+    },
+    { 
+      name: 'iPhone 17', 
+      volume: '789K posts',
+      context: 'Apple leaks show foldable iPhone design',
+      category: 'tech'
+    },
+    { 
+      name: 'NBA Free Agency', 
+      volume: '556K posts',
+      context: 'LeBron James shocking team switch',
+      category: 'sports'
+    },
+    { 
+      name: 'Back to School', 
+      volume: '123K posts',
+      context: 'Students preparing for fall semester',
+      category: 'news'
+    },
+    { 
+      name: 'Travis Scott', 
+      volume: '345K posts',
+      context: 'Utopia tour announcement',
+      category: 'entertainment'
+    }
+  ];
+  
+  // Shuffle and return 5 random topics to simulate real trends changing
+  return currentTopics
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 5);
+};
+
+// Generate throp-style takes using Claude
+const generateThropTake = async (trend: any): Promise<string> => {
+  // Try to use Claude for better takes
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      
+      const randomSeed = Math.random();
+      const prompt = `Current date/time: ${dateStr} at ${timeStr}
+You're a chaotic gen z poster in August 2025. Give ONE hot take about "${trend.name}".
+      
+Context: ${trend.context || 'trending topic right now'}
+Remember it's late summer 2025, hot weather, back-to-school season, everyone chronically online.
+
+${randomSeed > 0.7 ? 'Start with something like: the way, imagine, wild how, cant believe' : ''}
+${randomSeed > 0.5 ? 'Include words like: lowkey, giving, its the ___ for me, no but' : ''}
+${randomSeed > 0.3 ? 'Be extra cynical' : 'Be casually dismissive'}
+
+Keep it under 20 words. Be accurate but unhinged. Natural gen z voice, not forced.
+Just the take, nothing else:`;
+      
+      const { text } = await generateText({
+        model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
+        prompt,
+        temperature: 0.95,
+        maxTokens: 60,
+      });
+      
+      console.log(`Claude response for ${trend.name}: "${text}"`);
+      
+      // Apply chaos formatter for consistency
+      const transformed = chaosTransform(text.trim());
+      console.log(`After chaos formatter: "${transformed}"`);
+      return transformed;
+    } catch (error) {
+      console.log('Claude API error, falling back:', error);
+    }
+  }
+  
+  // Try backend API as second option
+  try {
+    const prompt = `You're throp. Give a hot take on "${trend.name}". Context: ${trend.context || 'trending'}. Be cynical, gen z, under 20 words.`;
+    
+    const response = await fetch('http://localhost:3001/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: prompt }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.response) {
+        // Apply chaos formatter
+        return chaosTransform(data.response);
+      }
+    }
+  } catch (error) {
+    console.log('Backend API not available, using fallback takes');
+  }
+  
+  // Fallback to pre-written takes if all APIs fail
+  console.log(`FALLBACK: Generating templated take for ${trend.name}`);
+  const takes = [
+    `${trend.name.toLowerCase()} trending again? groundbreaking`,
+    `the way everyone suddenly cares about ${trend.name.toLowerCase()}`,
+    `${trend.name.toLowerCase()} discourse is giving brain rot energy`,
+    `not y'all acting surprised about ${trend.name.toLowerCase()}`,
+    `${trend.name.toLowerCase()} having its weekly main character moment`
+  ];
+  
+  const take = takes[Math.floor(Math.random() * takes.length)];
+  
+  // Apply chaos formatter to fallback takes too
+  return chaosTransform(take);
+};
+
+export async function GET(req: NextRequest) {
+  try {
+    // Fetch real or mock trends
+    let trends = await getRealTrends();
+    
+    // Log what we're using
+    if (process.env.ANTHROPIC_API_KEY) {
+      console.log('Using Claude for hot takes generation');
+    } else {
+      console.log('No Anthropic API key, will use fallback takes');
+    }
+    
+    // Generate takes for each trend
+    const takesPromises = trends.slice(0, 5).map(async (trend, index) => ({
+      id: `take-${Date.now()}-${index}`,
+      topic: trend.name,
+      trendingVolume: trend.volume,
+      take: await generateThropTake(trend),
+      timestamp: new Date(),
+      agreeCount: Math.floor(Math.random() * 2000) + 100,
+      category: trend.category
+    }));
+    
+    const takes = await Promise.all(takesPromises);
+    
+    return NextResponse.json({ 
+      success: true, 
+      takes,
+      source: process.env.ANTHROPIC_API_KEY ? 'claude-generated' : 'fallback'
+    });
+    
+  } catch (error) {
+    console.error('Error fetching hot takes:', error);
+    
+    // Return mock data as fallback
+    const mockTrends = getMockTrends();
+    const fallbackTakesPromises = mockTrends.slice(0, 3).map(async (trend, index) => ({
+      id: `fallback-${Date.now()}-${index}`,
+      topic: trend.name,
+      trendingVolume: trend.volume,
+      take: await generateThropTake(trend),
+      timestamp: new Date(),
+      agreeCount: Math.floor(Math.random() * 1000) + 50,
+      category: trend.category
+    }));
+    
+    const fallbackTakes = await Promise.all(fallbackTakesPromises);
+    
+    return NextResponse.json({ 
+      success: true, 
+      takes: fallbackTakes,
+      source: 'fallback',
+      error: 'Using fallback data'
+    });
+  }
+}
+
+// POST endpoint for generating custom takes on demand
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { topic, context } = body;
+    
+    if (!topic) {
+      return NextResponse.json(
+        { error: 'Topic is required' },
+        { status: 400 }
+      );
+    }
+    
+    const take = await generateThropTake({
+      name: topic,
+      context: context || '',
+      category: 'custom'
+    });
+    
+    return NextResponse.json({
+      success: true,
+      take: {
+        id: `custom-${Date.now()}`,
+        topic,
+        take,
+        timestamp: new Date(),
+        agreeCount: 0,
+        category: 'custom'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error generating custom take:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate take' },
+      { status: 500 }
+    );
+  }
+}

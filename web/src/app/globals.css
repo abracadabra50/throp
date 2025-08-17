@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fefdfb;
+  --foreground: #000000;
+  --orange-main: #ff7a45;
+  --orange-light: #ffb088;
+  --beige: #f5e6d3;
+  --scuffed-blue: #4a90e2;
+  --washed-pink: #ffc0cb;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Comic Sans MS", "Comic Neue", cursive, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Handle throp logo background */
+img[src*="throp-actual"] {
+  background: transparent !important;
+}
+
+/* For logos on colored backgrounds, use multiply blend mode */
+header img[src*="throp-actual"] {
+  mix-blend-mode: multiply;
+}
+
+/* Wonky hand-drawn borders */
+.wonky-border {
+  border: 3px solid #000;
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  position: relative;
+}
+
+.wonky-border-thin {
+  border: 2px solid #000;
+  border-radius: 155px 25px 125px 10px/10px 125px 25px 155px;
+}
+
+/* Scribbly underline */
+.scribbly-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.scribbly-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 3'%3E%3Cpath d='M0,1.5 Q10,0 20,1.5 T40,1.5 T60,1.5 T80,1.5 T100,1.5' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-size: 100px 3px;
+  background-repeat: repeat-x;
+}
+
+/* Shaky animation */
+@keyframes shake {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg) translateY(0); }
+  25% { transform: rotate(2deg) translateY(-2px); }
+  50% { transform: rotate(-1deg) translateY(1px); }
+  75% { transform: rotate(1deg) translateY(-1px); }
+}
+
+.shaky {
+  animation: shake 2s ease-in-out infinite;
+}
+
+.wobble {
+  animation: wobble 3s ease-in-out infinite;
+}
+
+/* Chat bubbles */
+.bubble-user {
+  background: var(--scuffed-blue);
+  border: 3px solid #000;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  transform: rotate(-1deg);
+  padding: 12px 20px;
+  position: relative;
+}
+
+.bubble-throp {
+  background: var(--orange-light);
+  border: 3px solid #000;
+  border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+  transform: rotate(1deg);
+  padding: 12px 20px;
+  position: relative;
+}
+
+/* Badly drawn button */
+.scuffed-button {
+  background: var(--orange-main);
+  border: 4px solid #000;
+  border-radius: 50% 20% 50% 20%;
+  padding: 12px 24px;
+  font-weight: bold;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  transform: rotate(-2deg);
+}
+
+.scuffed-button:hover {
+  transform: rotate(2deg) scale(1.05);
+  background: var(--orange-light);
+}
+
+.scuffed-button:active {
+  transform: rotate(-3deg) scale(0.95);
+}
+
+/* Input field */
+.scuffed-input {
+  background: white;
+  border: 3px solid #000;
+  border-radius: 15px 225px 15px 255px/255px 15px 225px 15px;
+  padding: 12px 16px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.scuffed-input:focus {
+  outline: none;
+  background: #fffef5;
+  border-width: 4px;
+}
+
+/* Doodles scattered around */
+.doodle {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.doodle-1 {
+  top: 10%;
+  left: 5%;
+  transform: rotate(15deg);
+}
+
+.doodle-2 {
+  top: 30%;
+  right: 8%;
+  transform: rotate(-25deg);
+}
+
+.doodle-3 {
+  bottom: 20%;
+  left: 10%;
+  transform: rotate(45deg);
+}
+
+.doodle-4 {
+  bottom: 40%;
+  right: 5%;
+  transform: rotate(-10deg);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--beige);
+  border: 2px solid #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--orange-main);
+  border: 2px solid #000;
+  border-radius: 10px;
+}
+
+/* Random font switches */
+.random-font-1 {
+  font-family: "Comic Sans MS", cursive !important;
+}
+
+.random-font-2 {
+  font-family: "Marker Felt", "Comic Neue", cursive !important;
+}
+
+.random-font-3 {
+  font-family: "Chalkboard", "Comic Sans MS", cursive !important;
+}
+
+/* MS Paint style shadows */
+.ms-paint-shadow {
+  box-shadow: 4px 4px 0px #000;
+}
+
+/* Typing indicator dots */
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #000;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.typing-dot:nth-child(1) {
+  animation: blink 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation: blink 1.4s infinite 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation: blink 1.4s infinite 0.4s;
+}

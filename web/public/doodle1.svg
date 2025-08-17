@@ -1,0 +1,9 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Random squiggle -->
+  <path d="M10,50 Q30,20 50,50 T90,50" 
+        fill="none" 
+        stroke="#ff7a45" 
+        stroke-width="3" 
+        stroke-linecap="round"
+        opacity="0.4"/>
+</svg>

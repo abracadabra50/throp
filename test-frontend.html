@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Throp Chat Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .success { background: #065f46; }
+        .error { background: #7f1d1d; }
+        .warning { background: #78350f; }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #444;
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 10px 0;
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #ff8555;
+        }
+        #response {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            line-height: 1.5;
+        }
+        .chaos-text {
+            color: #ff6b35;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .citations {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+            font-size: 12px;
+            color: #888;
+        }
+        .config {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌀 Throp Chat Test</h1>
+        <p>Test your frontend connection to the Throp API</p>
+        
+        <div id="status" class="status warning">Checking API status...</div>
+        
+        <div class="config">
+            <strong>API URL:</strong> <span id="apiUrl">http://localhost:3001</span><br>
+            <strong>Endpoint:</strong> /api/chat
+        </div>
+        
+        <input type="text" id="message" placeholder="Type a message (try 'yo' or 'what is bitcoin?')" value="yo">
+        
+        <div>
+            <button onclick="testChat()">Send Message</button>
+            <button onclick="testStatus()">Check Status</button>
+            <button onclick="testChaosPreview()">Test Chaos Mode</button>
+        </div>
+        
+        <div id="response"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        
+        // Check status on load
+        window.onload = () => {
+            testStatus();
+        };
+        
+        async function testChat() {
+            const message = document.getElementById('message').value;
+            const responseDiv = document.getElementById('response');
+            const statusDiv = document.getElementById('status');
+            
+            if (!message) {
+                responseDiv.innerHTML = '<span style="color: #ff6b35;">Please enter a message!</span>';
+                return;
+            }
+            
+            responseDiv.innerHTML = 'Sending message...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        context: {
+                            username: 'web_user'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✅ Chat API working!';
+                    
+                    let output = '<div class="chaos-text">throp says:</div>\n';
+                    output += data.response + '\n\n';
+                    
+                    if (data.threadParts && data.threadParts.length > 1) {
+                        output += '<div style="color: #ff6b35; margin-top: 10px;">Thread Parts:</div>\n';
+                        data.threadParts.forEach((part, i) => {
+                            output += `Part ${i+1}: ${part}\n\n`;
+                        });
+                    }
+                    
+                    if (data.citations && data.citations.length > 0) {
+                        output += '<div class="citations">Sources:\n';
+                        data.citations.forEach(citation => {
+                            output += `• ${citation}\n`;
+                        });
+                        output += '</div>';
+                    }
+                    
+                    responseDiv.innerHTML = output;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = '❌ API returned error';
+                    responseDiv.innerHTML = `<span style="color: red;">Error: ${data.error || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Failed to connect to API';
+                responseDiv.innerHTML = `
+                    <span style="color: red;">Connection Error: ${error.message}</span>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #7f1d1d; border-radius: 6px;">
+                        <strong>Troubleshooting:</strong><br>
+                        1. Make sure the API is running: <code>API_ONLY_MODE=true npm run dev:api</code><br>
+                        2. Check the API URL is correct: ${API_URL}<br>
+                        3. Check for CORS errors in browser console (F12)<br>
+                        4. Try running this test file locally<br><br>
+                        
+                        <strong>In your Next.js frontend, make sure you have:</strong><br>
+                        <code>
+                        const response = await fetch('${API_URL}/api/chat', {<br>
+                        &nbsp;&nbsp;method: 'POST',<br>
+                        &nbsp;&nbsp;headers: { 'Content-Type': 'application/json' },<br>
+                        &nbsp;&nbsp;body: JSON.stringify({ message: userMessage })<br>
+                        });
+                        </code>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testStatus() {
+            const statusDiv = document.getElementById('status');
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/status`);
+                const data = await response.json();
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = `✅ API is ${data.status} | Perplexity: ${data.perplexity.connected ? '✅' : '❌'} | Redis: ${data.redis.connected ? '✅' : '❌'}`;
+                
+                responseDiv.innerHTML = `
+                    <strong>API Status:</strong>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Cannot connect to API at ' + API_URL;
+                responseDiv.innerHTML = `
+                    <span style="color: red;">Make sure the API server is running!</span><br>
+                    Run: <code>API_ONLY_MODE=true npm run dev:api</code>
+                `;
+            }
+        }
+        
+        async function testChaosPreview() {
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/tweet/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: "Bitcoin has increased by 15% according to market analysis."
+                    })
+                });
+                
+                const data = await response.json();
+                
+                responseDiv.innerHTML = `
+                    <div class="chaos-text">Chaos Mode Preview:</div>
+                    <strong>Original:</strong> ${data.original}
+                    <strong>Chaos:</strong> <span style="color: #ff6b35;">${data.chaos}</span>
+                `;
+            } catch (error) {
+                responseDiv.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Allow Enter key to send
+        document.getElementById('message').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                testChat();
+            }
+        });
+    </script>
+</body>
+</html>

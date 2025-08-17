@@ -1,0 +1,58 @@
+{
+  "WARNING": "⚠️ BASIC PLAN can only check 5 timelines per 15 min! Max 2 accounts recommended!",
+  "accounts_basic": [
+    {
+      "username": "elonmusk",
+      "keywords": ["tesla", "spacex", "twitter", "x", "doge"],
+      "minEngagement": 50000,
+      "description": "Only monitor Elon - he tweets enough for everyone"
+    }
+  ],
+  "accounts_pro": [
+    {
+      "username": "elonmusk",
+      "keywords": ["tesla", "spacex", "twitter", "x", "doge"],
+      "minEngagement": 10000,
+      "description": "Elon's main - high engagement only"
+    },
+    {
+      "username": "VitalikButerin",
+      "keywords": ["ethereum", "eth", "crypto", "blockchain"],
+      "minEngagement": 500,
+      "description": "Ethereum founder - crypto takes"
+    },
+    {
+      "username": "CZ_Binance",
+      "keywords": ["binance", "bnb", "crypto", "defi"],
+      "minEngagement": 1000,
+      "description": "CZ - Binance CEO"
+    },
+    {
+      "username": "naval",
+      "keywords": ["wealth", "happiness", "startup", "philosophy"],
+      "minEngagement": 2000,
+      "description": "Naval - Philosophy and startups"
+    },
+    {
+      "username": "balajis",
+      "keywords": ["bitcoin", "network state", "crypto"],
+      "minEngagement": 500,
+      "description": "Balaji - Tech and crypto"
+    }
+  ],
+  "accounts": [
+    {
+      "username": "elonmusk",
+      "keywords": ["tesla", "spacex", "twitter", "x", "doge"],
+      "minEngagement": 50000,
+      "description": "BASIC PLAN: Only 1 account recommended!"
+    }
+  ],
+  "globalSettings": {
+    "checkInterval": 900000,
+    "maxQuotesPerHour": 2,
+    "defaultMinEngagement": 500,
+    "blacklistWords": ["giveaway", "airdrop", "follow", "retweet to win"],
+    "note": "Basic API plan: 15min checks, 2 quotes/hour max. Upgrade to Pro for better performance."
+  }
+}

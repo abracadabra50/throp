@@ -1,0 +1,77 @@
+{
+  "basicPlanConfiguration": {
+    "description": "Sustainable configuration for Twitter Basic Plan ($100/month)",
+    "lastUpdated": "2025-01-17",
+    "source": "Official Twitter API v2 Rate Limits",
+    
+    "actualLimits": {
+      "mentions": {
+        "limit": 10,
+        "window": "15 minutes",
+        "recommended": "Check every 2 minutes max"
+      },
+      "tweets": {
+        "limit": 100,
+        "window": "24 hours",
+        "recommended": "4 tweets per hour max"
+      },
+      "userTimeline": {
+        "limit": 5,
+        "window": "15 minutes",
+        "recommended": "Check 2 accounts max"
+      },
+      "userByUsername": {
+        "limit": 100,
+        "window": "24 hours",
+        "recommended": "4 lookups per hour"
+      }
+    },
+    
+    "recommendedSetup": {
+      "option1_repliesOnly": {
+        "description": "Focus on replying to mentions",
+        "mainBot": true,
+        "quoteMonitor": false,
+        "checkInterval": "2 minutes",
+        "tweetsPerHour": 4,
+        "sustainability": "100% - Can run 24/7"
+      },
+      
+      "option2_minimal_quotes": {
+        "description": "Reply + monitor 1-2 accounts",
+        "mainBot": true,
+        "quoteMonitor": true,
+        "monitorAccounts": ["elonmusk"],
+        "checkInterval": "15 minutes",
+        "tweetsPerHour": 3,
+        "quotesPerHour": 1,
+        "sustainability": "80% - Needs careful management"
+      },
+      
+      "option3_rotation": {
+        "description": "Alternate between features",
+        "schedule": {
+          "00-08": "Main bot only",
+          "08-12": "Quote monitor (2 accounts)",
+          "12-24": "Main bot only"
+        },
+        "sustainability": "90% - Works well"
+      }
+    },
+    
+    "warningFlags": {
+      "neverDo": [
+        "Monitor more than 2 accounts",
+        "Check timelines more than every 15 minutes",
+        "Run multiple instances",
+        "Post more than 4 tweets per hour"
+      ],
+      "alwaysDo": [
+        "Use exponential backoff on 429 errors",
+        "Track daily tweet count",
+        "Leave 20% buffer on all limits",
+        "Monitor rate limit headers"
+      ]
+    }
+  }
+}

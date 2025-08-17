@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Connection</title>
+    <style>
+        body { font-family: Comic Sans MS, cursive; padding: 20px; background: #fefdfb; }
+        button { padding: 10px 20px; background: #ff7a45; border: 3px solid black; cursor: pointer; font-size: 18px; }
+        pre { background: white; padding: 10px; border: 2px solid black; }
+    </style>
+</head>
+<body>
+    <h1>throp API Test 🍊</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <pre id="result">Click button to test...</pre>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing connection to http://localhost:3001/api/chat...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'user', content: 'test message' }
+                        ]
+                    })
+                });
+                
+                if (response.ok) {
+                    resultDiv.textContent = '✅ SUCCESS! API is running and accessible!\n\n' + 
+                                          'Status: ' + response.status + '\n' +
+                                          'Headers: ' + JSON.stringify([...response.headers.entries()], null, 2);
+                    
+                    // Try to read response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let result = '';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        result += decoder.decode(value);
+                    }
+                    
+                    resultDiv.textContent += '\n\nResponse: ' + result;
+                } else {
+                    resultDiv.textContent = '❌ API returned error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ Connection failed!\n\n' + 
+                                      'Error: ' + error.message + '\n\n' +
+                                      'Possible issues:\n' +
+                                      '1. API server not running on port 3001\n' +
+                                      '2. CORS not configured on the API\n' +
+                                      '3. Network/firewall blocking connection\n\n' +
+                                      'Check browser console for more details';
+                console.error('Full error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

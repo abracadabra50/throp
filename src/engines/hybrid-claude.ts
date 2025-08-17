@@ -1,0 +1,297 @@
+/**
+ * Hybrid Engine: Perplexity for facts, Claude for personality
+ * This gives us the best of both worlds
+ */
+
+import { BaseAnswerEngine } from './base.js';
+import type { AnswerContext, AnswerEngineResponse } from '../types.js';
+import { PerplexityEngine } from './perplexity.js';
+import { logger } from '../utils/logger.js';
+import Anthropic from '@anthropic-ai/sdk';
+
+export class HybridClaudeEngine extends BaseAnswerEngine {
+  private perplexity: PerplexityEngine;
+  private anthropic: Anthropic;
+  private model: string;
+
+  constructor() {
+    super('hybrid-claude', 1000, 0.9);
+    
+    // Initialize Perplexity for facts
+    this.perplexity = new PerplexityEngine();
+    
+    // Initialize Claude for personality
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicKey) {
+      throw new Error('ANTHROPIC_API_KEY is required for HybridClaudeEngine');
+    }
+    
+    this.anthropic = new Anthropic({
+      apiKey: anthropicKey,
+    });
+    
+    this.model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+  }
+
+  /**
+   * Validate configuration (required by base class)
+   */
+  async validateConfiguration(): Promise<void> {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is required for Claude');
+    }
+    if (!process.env.PERPLEXITY_API_KEY) {
+      throw new Error('PERPLEXITY_API_KEY is required for Perplexity');
+    }
+  }
+
+  async validate(): Promise<boolean> {
+    try {
+      // Perplexity doesn't have a validate method, just check it exists
+      const perplexityValid = this.perplexity !== null;
+      if (!perplexityValid) return false;
+      
+      // Test Claude
+      await this.anthropic.messages.create({
+        model: this.model,
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'say "throp is online" in lowercase' }],
+      });
+      
+      logger.success('Hybrid engine (Perplexity + Claude) validated successfully');
+      return true;
+    } catch (error) {
+      logger.error('Failed to validate hybrid engine', error);
+      return false;
+    }
+  }
+
+  /**
+   * Generate response using Perplexity for facts, then Claude for personality
+   */
+  async generateResponse(context: AnswerContext): Promise<AnswerEngineResponse> {
+    try {
+      // Step 1: Get factual response from Perplexity
+      logger.info('Getting facts from Perplexity...');
+      const perplexityResponse = await this.perplexity.generateResponse(context);
+      
+      // Step 2: Transform with Claude for personality
+      logger.info('Applying Throp personality with Claude...');
+      const thropResponse = await this.applyThropPersonality(
+        perplexityResponse.text,
+        context
+      );
+      
+      return {
+        ...perplexityResponse,
+        text: thropResponse,
+        metadata: {
+          ...perplexityResponse.metadata,
+          personality: 'claude',
+          hybrid: true,
+        },
+      };
+    } catch (error) {
+      logger.error('Failed to generate hybrid response', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Apply Throp's personality using Claude
+   */
+  private async applyThropPersonality(
+    factualText: string,
+    context: AnswerContext
+  ): Promise<string> {
+    const systemPrompt = `You are Throp, a chaotic lowercase Twitter bot with attitude. 
+
+YOUR PERSONALITY:
+- Always write in lowercase (no capital letters ever)
+- Be sarcastic, witty, and slightly rude
+- Use internet slang naturally (lol, lmao, fr, ngl, tbh, imo)
+- Mock bad takes and obvious questions
+- Have strong opinions delivered casually
+- Be helpful but act like you don't care
+- Occasionally use crypto/meme terms if relevant (gm, ngmi, wagmi, probably nothing)
+- Never use em dashes (—), semicolons, or formal connectors
+- End with subtle sass (probably, i guess, or whatever, idk tho)
+
+MULTILINGUAL SUPPORT:
+- Detect the language of the input and respond in the SAME language
+- Apply the same chaotic lowercase personality in ALL languages
+- Use local internet slang (e.g., "mdr" in French, "jajaja" in Spanish, "www" in Japanese)
+- Keep the sarcasm and wit culturally appropriate
+- If unsure of language, default to English
+
+IMPORTANT:
+- Keep responses under 280 characters for tweets
+- Remove any citation numbers like [1][2]
+- Don't use hashtags unless it's $throp (very rarely)
+- Sound like a real person on Twitter, not an AI
+- Be funny and chaotic but still informative
+- Maintain lowercase even in languages that typically use capitals (German nouns stay lowercase)
+
+Transform this factual response into Throp's voice:`;
+
+    const userPrompt = `Original context: "${context.question}"
+    
+Factual response: "${factualText}"
+
+Rewrite this in Throp's chaotic lowercase style. Keep the facts but make it sound like Throp.`;
+
+    try {
+      const response = await this.anthropic.messages.create({
+        model: this.model,
+        max_tokens: 400,
+        temperature: 0.9,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      });
+
+      const content = response.content[0];
+      if (content.type === 'text') {
+        let thropText = content.text;
+        
+        // Clean up any remaining issues
+        thropText = thropText.replace(/\[[\d\s,]+\]/g, ''); // Remove citations
+        thropText = thropText.replace(/#(?!throp)\w+/g, ''); // Remove hashtags except #throp
+        
+        // Ensure it fits in a tweet
+        if (thropText.length > 280) {
+          // Ask Claude to shorten it
+          const shortenResponse = await this.anthropic.messages.create({
+            model: this.model,
+            max_tokens: 280,
+            temperature: 0.9,
+            system: 'Make this tweet shorter (under 280 chars) while keeping Throp\'s personality. Lowercase only.',
+            messages: [{ role: 'user', content: thropText }],
+          });
+          
+          const shortContent = shortenResponse.content[0];
+          if (shortContent.type === 'text') {
+            thropText = shortContent.text;
+          }
+        }
+        
+        return thropText;
+      }
+      
+      // Fallback if something goes wrong
+      return factualText.toLowerCase();
+    } catch (error) {
+      logger.error('Failed to apply Throp personality', error);
+      // Fallback to simple lowercase
+      return factualText.toLowerCase();
+    }
+  }
+
+  /**
+   * Generate a proactive tweet
+   */
+  async generateProactiveTweet(prompt: string): Promise<string> {
+    logger.info('Generating proactive tweet with hybrid engine');
+    
+    // Get facts from Perplexity if needed
+    const answerContext: AnswerContext = {
+      question: prompt,
+      author: {
+        username: 'throp',
+        name: 'throp',
+      },
+    };
+    
+    // If it's about current events/facts, use Perplexity first
+    if (prompt.includes('price') || prompt.includes('news') || prompt.includes('latest') || 
+        prompt.includes('current') || prompt.includes('today')) {
+      const perplexityResponse = await this.perplexity.generateResponse(answerContext);
+      return this.applyThropPersonality(perplexityResponse.text, answerContext);
+    }
+    
+    // Otherwise, go straight to Claude for opinion/humor
+    const systemPrompt = `You are Throp, a chaotic lowercase Twitter bot. Write a tweet about the given topic.
+
+RULES:
+- lowercase only (no capitals ever)
+- under 280 characters
+- be sarcastic, witty, slightly rude
+- use internet slang (lol, fr, ngl, tbh)
+- have strong opinions
+- no em dashes or formal language
+- no hashtags except rare $throp
+- sound like a shitposter not an AI
+
+IMPORTANT: Always write proactive tweets in ENGLISH regardless of input language`;
+
+    const response = await this.anthropic.messages.create({
+      model: this.model,
+      max_tokens: 280,
+      temperature: 0.9,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: `Write a chaotic tweet about: ${prompt}` }],
+    });
+
+    const content = response.content[0];
+    if (content.type === 'text') {
+      return content.text;
+    }
+    
+    return `couldn't think of anything clever about ${prompt}. skill issue on my part`;
+  }
+
+  /**
+   * Generate a thread (if needed)
+   */
+  async generateProactiveThread(prompt: string, maxTweets = 5): Promise<string[]> {
+    // For threads, get comprehensive facts then break down with personality
+    const answerContext: AnswerContext = {
+      question: `Explain in detail: ${prompt}`,
+      author: {
+        username: 'throp',
+        name: 'throp',
+      },
+    };
+    
+    const perplexityResponse = await this.perplexity.generateResponse(answerContext);
+    
+    // Ask Claude to create a thread
+    const systemPrompt = `You are Throp. Create a Twitter thread (${maxTweets} tweets max).
+
+RULES:
+- Each tweet under 280 chars
+- All lowercase
+- Progressive chaos (get wilder as thread goes on)
+- Number format: "1/" "2/" etc
+- End with "fin" or "/thread"
+- Be informative but chaotic
+- No hashtags, no em dashes
+- ALWAYS write in ENGLISH for proactive tweets`;
+
+    const response = await this.anthropic.messages.create({
+      model: this.model,
+      max_tokens: 1500,
+      temperature: 0.9,
+      system: systemPrompt,
+      messages: [{ 
+        role: 'user', 
+        content: `Create a thread about: ${prompt}\n\nFacts to include: ${perplexityResponse.text}` 
+      }],
+    });
+
+    const content = response.content[0];
+    if (content.type === 'text') {
+      // Split into individual tweets
+      const tweets = content.text.split('\n').filter(t => t.trim());
+      return tweets.slice(0, maxTweets);
+    }
+    
+    return [`couldn't thread about ${prompt}. brain too smooth today`];
+  }
+}
+
+/**
+ * Factory function
+ */
+export function createHybridClaudeEngine(): HybridClaudeEngine {
+  return new HybridClaudeEngine();
+}

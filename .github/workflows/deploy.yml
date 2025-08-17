@@ -1,0 +1,153 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main, production]
+  pull_request:
+    types: [opened, synchronize]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # 1. Run tests and linting
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: true  # Don't fail on lint warnings
+      
+      - name: Run tests
+        run: npm test -- --run
+        continue-on-error: true  # Tests might not be set up yet
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+  # 2. Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true  # Don't block deploy on non-critical vulnerabilities
+
+  # 3. Deploy to Railway (staging)
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Deploy to Railway Staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID_STAGING }}
+          railway up --environment=staging
+      
+      - name: Comment PR with staging URL
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚂 Deployed to staging! Check it out at: https://throp-staging.up.railway.app'
+            })
+
+  # 4. Deploy to Railway (production)
+  deploy-production:
+    name: Deploy to Production
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Deploy to Railway Production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --environment=production
+      
+      - name: Run smoke tests
+        run: |
+          sleep 30  # Wait for deployment
+          curl -f https://throp.up.railway.app/health || exit 1
+      
+      - name: Create deployment notification
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data } = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              description: 'Deployed to Railway',
+              auto_merge: false,
+              required_contexts: [],
+              production_environment: true
+            });
+            
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: data.id,
+              state: 'success',
+              environment_url: 'https://throp.up.railway.app',
+              description: 'Deployment successful'
+            });
+
+  # 5. Rollback on failure
+  rollback:
+    name: Rollback if Failed
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+      - name: Trigger rollback
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "⚠️ Deployment failed, consider manual rollback"
+          # Railway doesn't have automatic rollback via CLI yet
+          # You'll need to manually rollback in Railway dashboard

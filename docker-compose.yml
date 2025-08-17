@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Redis for caching and state management
+  redis:
+    image: redis:7-alpine
+    container_name: throp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Server (for web interface)
+  api:
+    build: .
+    container_name: throp-api
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - API_ONLY_MODE=true
+      - API_PORT=3001
+      - REDIS_URL=redis://redis:6379
+      - REDIS_NAMESPACE=throp
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - PERPLEXITY_MODEL=sonar
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: npm run start:api
+
+  # Twitter Bot (optional - comment out if not needed)
+  # bot:
+  #   build: .
+  #   container_name: throp-bot
+  #   environment:
+  #     - NODE_ENV=production
+  #     - REDIS_URL=redis://redis:6379
+  #     - REDIS_NAMESPACE=throp
+  #     - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+  #     - TWITTER_API_KEY=${TWITTER_API_KEY}
+  #     - TWITTER_API_SECRET_KEY=${TWITTER_API_SECRET_KEY}
+  #     - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+  #     - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
+  #     - TWITTER_BOT_USERNAME=${TWITTER_BOT_USERNAME}
+  #     - TWITTER_BOT_USER_ID=${TWITTER_BOT_USER_ID}
+  #     - TWITTER_API_PLAN=${TWITTER_API_PLAN:-basic}
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+  #   command: npm start
+
+volumes:
+  redis_data:
