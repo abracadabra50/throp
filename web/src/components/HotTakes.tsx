@@ -143,7 +143,7 @@ export default function HotTakes() {
     return (
       <div className="hot-takes-container">
         <div className="hot-takes-header">
-          <h2>throp's hot takes 🔥</h2>
+          <h2>throp&apos;s hot takes 🔥</h2>
         </div>
         <div className="hot-takes-loading">
           <Image 
@@ -250,7 +250,7 @@ export default function HotTakes() {
       {/* Header */}
       <div className="hot-takes-header">
         <h2>
-          <span className="wobble-text">throp's hot takes</span> 
+          <span className="wobble-text">throp&apos;s hot takes</span> 
           <span className="fire-emoji">🔥</span>
         </h2>
         <button
@@ -295,7 +295,7 @@ export default function HotTakes() {
 
             {/* The actual take */}
             <div className="take-content">
-              <p>"{take.take}"</p>
+              <p>&quot;{take.take}&quot;</p>
             </div>
 
             {/* Actions */}

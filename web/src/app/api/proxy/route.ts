@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     
     // Extract the last user message
     const messages = body.messages || [];
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
+    const lastUserMessage = messages.filter((m: {role: string}) => m.role === 'user').pop();
     const message = lastUserMessage?.content || 'hello';
     
     console.log('Proxying message:', message);

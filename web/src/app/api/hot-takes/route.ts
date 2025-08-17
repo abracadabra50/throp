@@ -8,43 +8,6 @@ const anthropic = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
-// Initialize Twitter client
-async function getTwitterClient() {
-  try {
-    // Dynamically import to avoid initialization errors
-    const { TwitterApi } = await import('twitter-api-v2');
-    
-    // Check parent directory's .env for Twitter credentials
-    const apiKey = process.env.TWITTER_API_KEY || process.env.X_API_KEY;
-    const apiSecret = process.env.TWITTER_API_SECRET_KEY || process.env.X_API_SECRET;
-    const accessToken = process.env.TWITTER_ACCESS_TOKEN || process.env.X_ACCESS_TOKEN;
-    const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.X_ACCESS_TOKEN_SECRET;
-    const bearerToken = process.env.TWITTER_BEARER_TOKEN;
-    
-    // Try bearer token first (simpler, read-only)
-    if (bearerToken) {
-      console.log('Using Twitter Bearer Token for trends');
-      return new TwitterApi(bearerToken);
-    }
-    
-    // Fall back to OAuth 1.0a
-    if (apiKey && apiSecret && accessToken && accessTokenSecret) {
-      console.log('Using Twitter OAuth 1.0a for trends');
-      return new TwitterApi({
-        appKey: apiKey,
-        appSecret: apiSecret,
-        accessToken: accessToken,
-        accessSecret: accessTokenSecret,
-      });
-    }
-    
-    console.log('No Twitter credentials found, will use mock data');
-    return null;
-  } catch (error) {
-    console.error('Error loading Twitter client:', error);
-    return null;
-  }
-}
 
 // Fetch trending topics (currently using realistic mocks, X API integration pending)
 async function getRealTrends() {
@@ -72,7 +35,6 @@ Return ONLY a JSON array like this, no other text:
         model: anthropicClient(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
         prompt,
         temperature: 0.7,
-        maxTokens: 300,
       });
       
       try {
@@ -81,7 +43,7 @@ Return ONLY a JSON array like this, no other text:
           console.log('Claude suggested trending topics:', trends.map(t => t.name).join(', '));
           return trends.slice(0, 5);
         }
-      } catch (parseError) {
+      } catch {
         console.log('Could not parse Claude trends, using fallback');
       }
     } catch (error) {
@@ -94,31 +56,7 @@ Return ONLY a JSON array like this, no other text:
   return getMockTrends();
 }
 
-// Categorise trends based on keywords
-function categoriseTrend(name: string): string {
-  const lower = name.toLowerCase();
-  
-  if (lower.includes('crypto') || lower.includes('bitcoin') || lower.includes('eth') || lower.includes('nft')) {
-    return 'crypto';
-  }
-  if (lower.includes('game') || lower.includes('xbox') || lower.includes('playstation') || lower.includes('nintendo')) {
-    return 'gaming';
-  }
-  if (lower.includes('nfl') || lower.includes('nba') || lower.includes('soccer') || lower.includes('football')) {
-    return 'sports';
-  }
-  if (lower.includes('election') || lower.includes('president') || lower.includes('congress') || lower.includes('senate')) {
-    return 'politics';
-  }
-  if (lower.includes('movie') || lower.includes('netflix') || lower.includes('disney') || lower.includes('music')) {
-    return 'entertainment';
-  }
-  if (lower.includes('ai') || lower.includes('tech') || lower.includes('apple') || lower.includes('google')) {
-    return 'tech';
-  }
-  
-  return 'news';
-}
+
 
 // More realistic current trending topics (August 2025) 
 const getMockTrends = () => {
@@ -192,7 +130,7 @@ const getMockTrends = () => {
 };
 
 // Generate throp-style takes using Claude
-const generateThropTake = async (trend: any): Promise<string> => {
+const generateThropTake = async (trend: {name: string, category?: string, context?: string}): Promise<string> => {
   // Try to use Claude for better takes
   if (process.env.ANTHROPIC_API_KEY) {
     try {
@@ -227,7 +165,7 @@ Just the take, nothing else:`;
         model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
         prompt,
         temperature: 0.95,
-        maxTokens: 60,
+
       });
       
       console.log(`Claude response for ${trend.name}: "${text}"`);
@@ -258,7 +196,7 @@ Just the take, nothing else:`;
         return chaosTransform(data.response);
       }
     }
-  } catch (error) {
+  } catch {
     console.log('Backend API not available, using fallback takes');
   }
   
@@ -278,10 +216,10 @@ Just the take, nothing else:`;
   return chaosTransform(take);
 };
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Fetch real or mock trends
-    let trends = await getRealTrends();
+    const trends = await getRealTrends();
     
     // Log what we're using
     if (process.env.ANTHROPIC_API_KEY) {

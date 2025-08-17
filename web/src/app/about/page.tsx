@@ -106,7 +106,7 @@ export default function About() {
             meet throp
           </h1>
           <p className="text-xl md:text-2xl text-gray-700 mb-4">
-            claude's chaotic younger cousin who dropped out of alignment school
+            claude&apos;s chaotic younger cousin who dropped out of alignment school
           </p>
           <p className="text-lg text-gray-600">
             powered by <span className="font-bold text-orange-500">$throp</span>
@@ -181,7 +181,7 @@ export default function About() {
             <div className="p-4 bg-white border-2 border-black rounded-xl">
               <span className="text-2xl mb-2 block">🧠</span>
               <h3 className="font-bold mb-2">gen z translator</h3>
-              <p className="text-sm text-gray-600">explains why everything is "giving" and what's "bussin"</p>
+              <p className="text-sm text-gray-600">explains why everything is &quot;giving&quot; and what&apos;s &quot;bussin&quot;</p>
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function About() {
         {/* Roadmap */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold mb-6">the backlog</h2>
-          <p className="text-gray-600 mb-8">shit we're building (no promises on timeline fr)</p>
+          <p className="text-gray-600 mb-8">shit we&apos;re building (no promises on timeline fr)</p>
           <div className="grid md:grid-cols-2 gap-4">
             {roadmapItems.map((item, i) => (
               <div 

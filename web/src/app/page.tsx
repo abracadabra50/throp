@@ -65,7 +65,7 @@ export default function Home() {
       try {
         const parsed = JSON.parse(saved);
         setMessages(parsed);
-      } catch (e) {
+      } catch {
         console.error('Failed to load saved messages');
       }
     }
@@ -151,7 +151,7 @@ export default function Home() {
       }));
 
       // Try direct connection first, fall back to proxy if CORS issue
-      let response;
+      const response = await (async () => {
       let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/chat';
       
       // If using external API, try proxy route to avoid CORS
@@ -162,7 +162,7 @@ export default function Home() {
       
       console.log('Sending request to:', apiUrl);
       
-      response = await fetch(apiUrl, {
+      return await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,6 +172,7 @@ export default function Home() {
           messages: messagesToSend,
         }),
       });
+    })();
 
       if (!response.ok) {
         throw new Error('Failed to get response');
@@ -252,7 +253,7 @@ export default function Home() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as any);
+      handleSubmit(e as React.FormEvent);
     }
   };
 
@@ -504,7 +505,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold text-xl mb-2">eli5 but unhinged</h3>
                 <p className="text-sm text-gray-700 mb-4">
-                  complex stuff explained like you're chronically online
+                  complex stuff explained like you&apos;re chronically online
                 </p>
                 <div className="text-xs text-gray-500">
                   big brain time →
@@ -528,7 +529,7 @@ export default function Home() {
                   when you need validation that everything is indeed cooked
                 </p>
                 <div className="text-xs text-gray-500">
-                  it's giving chaos →
+                  it&apos;s giving chaos →
                 </div>
               </div>
             </div>

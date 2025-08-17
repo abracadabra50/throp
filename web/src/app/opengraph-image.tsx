@@ -60,7 +60,7 @@ export default async function Image() {
             transform: 'rotate(0.5deg)',
           }}
         >
-          claude's chaotic younger cousin
+          claude&apos;s chaotic younger cousin
         </div>
         
         {/* Description */}
