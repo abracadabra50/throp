@@ -33,12 +33,17 @@ NODE_ENV=production
 PORT=3001
 
 # ============================================
+# REQUIRED - Enable Twitter Bot Features
+# ============================================
+API_ONLY_MODE=false
+ENABLE_MENTION_POLLING=true
+MENTION_POLL_INTERVAL=60000
+
+# ============================================
 # OPTIONAL - Feature Configuration
 # ============================================
 PERPLEXITY_MODEL=sonar
 CHAOS_LEVEL=7
-ENABLE_MENTION_POLLING=true
-MENTION_POLL_INTERVAL=60000
 ENABLE_PROACTIVE_TWEETS=false
 ENABLE_QUOTE_MONITOR=false
 ENABLE_WEBSOCKET=true

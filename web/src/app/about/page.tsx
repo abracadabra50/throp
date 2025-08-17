@@ -54,6 +54,12 @@ export default function About() {
       completed: false
     },
     { 
+      status: '📸', 
+      title: 'image upload',
+      desc: 'drop your pics for instant visual roasting',
+      completed: false
+    },
+    { 
       status: '🚀', 
       title: 'group chats',
       desc: 'collective brain rot sessions',

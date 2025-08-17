@@ -470,6 +470,8 @@ export class ApiServer {
             // Start polling for mentions if Twitter is configured and enabled
             const enablePolling = process.env.ENABLE_MENTION_POLLING !== 'false';
             if (this.twitterClient && !process.env.API_ONLY_MODE && enablePolling) {
+                // Start polling even without Redis (will use in-memory tracking)
+                logger.info('Starting mention polling (Redis optional for persistence)');
                 this.startMentionPolling();
             }
         });
@@ -553,8 +555,10 @@ export class ApiServer {
      * Load processed mentions from cache
      */
     async loadProcessedMentions() {
-        if (!this.cache)
+        if (!this.cache) {
+            logger.info('Redis not available - using in-memory mention tracking');
             return;
+        }
         try {
             const cached = await this.cache.get('throp:processed_mentions');
             if (cached) {
