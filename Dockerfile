@@ -9,14 +9,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev)
-RUN npm ci
+# Install all dependencies with reduced memory usage
+RUN npm ci --maxsockets 1
 
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Build TypeScript with memory limit
+RUN NODE_OPTIONS="--max-old-space-size=512" npm run build
 
 # Production stage
 FROM node:20-alpine
