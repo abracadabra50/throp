@@ -8,6 +8,7 @@ import type { AnswerContext, AnswerEngineResponse } from '../types.js';
 import { PerplexityEngine } from './perplexity.js';
 import { logger } from '../utils/logger.js';
 import Anthropic from '@anthropic-ai/sdk';
+import { getTwitterSearch } from '../twitter/twitter-search.js';
 
 export class HybridClaudeEngine extends BaseAnswerEngine {
   private perplexity: PerplexityEngine;
@@ -75,10 +76,21 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
       logger.info('Getting facts from Perplexity...');
       const perplexityResponse = await this.perplexity.generateResponse(context);
       
-      // Step 2: Transform with Claude for personality
+      // Step 2: Check if we should search Twitter for additional context
+      let enrichedText = perplexityResponse.text;
+      if (this.shouldSearchTwitter(context.question)) {
+        logger.info('Searching Twitter/X for additional context...');
+        const twitterContext = await this.getTwitterContext(context.question);
+        if (twitterContext) {
+          enrichedText = `${perplexityResponse.text}\n\n${twitterContext}`;
+          logger.info('Added Twitter context to response');
+        }
+      }
+      
+      // Step 3: Transform with Claude for personality
       logger.info('Applying Throp personality with Claude...');
       const thropResponse = await this.applyThropPersonality(
-        perplexityResponse.text,
+        enrichedText,
         context
       );
       
@@ -89,12 +101,70 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
           ...perplexityResponse.metadata,
           personality: 'claude',
           hybrid: true,
+          twitterSearched: this.shouldSearchTwitter(context.question),
         },
       };
     } catch (error) {
       logger.error('Failed to generate hybrid response', error);
       throw error;
     }
+  }
+
+  /**
+   * Determine if we should search Twitter for additional context
+   */
+  private shouldSearchTwitter(question: string): boolean {
+    const triggers = [
+      'drama', 'beef', 'latest', 'happening', 'twitter', 'thread', 
+      'ratio', 'viral', 'trending', 'discourse', 'timeline', 'tweets',
+      'bags app', 'founder', 'exposed', 'scandal', 'controversy'
+    ];
+    const lowerQuestion = question.toLowerCase();
+    return triggers.some(trigger => lowerQuestion.includes(trigger));
+  }
+
+  /**
+   * Get Twitter context for the question
+   */
+  private async getTwitterContext(question: string): Promise<string | null> {
+    try {
+      const twitterSearch = getTwitterSearch();
+      
+      // Extract key terms for search
+      const searchQuery = this.extractSearchTerms(question);
+      
+      const results = await twitterSearch.searchTweets(searchQuery, 10);
+      if (!results || results.tweets.length === 0) {
+        logger.debug('No Twitter results found', { searchQuery });
+        return null;
+      }
+      
+      return twitterSearch.formatForContext(results);
+    } catch (error) {
+      logger.error('Failed to get Twitter context', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extract search terms from question
+   */
+  private extractSearchTerms(question: string): string {
+    // Remove common question words and clean up
+    const filtered = question
+      .toLowerCase()
+      .replace(/what'?s?|how|why|when|where|who|is|are|the|with|about|latest/g, '')
+      .replace(/[\/\?\!\.]/g, ' ') // Remove special chars
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+    
+    // For bags app specifically, create a better search
+    if (filtered.includes('bags app')) {
+      return 'bags app';
+    }
+    
+    // Take first 100 chars for search query
+    return filtered.substring(0, 100);
   }
 
   /**

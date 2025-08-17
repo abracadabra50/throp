@@ -19,6 +19,7 @@ export default function HotTakes() {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userAgreements, setUserAgreements] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
 
   // Fetch trending topics and generate takes
   const fetchHotTakes = async () => {
@@ -72,9 +73,19 @@ export default function HotTakes() {
     }
   };
 
-  // Initial fetch
+  // Initial fetch and mobile detection
   useEffect(() => {
     fetchHotTakes();
+    
+    // Detect mobile screen size
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Auto-refresh every 5 minutes
@@ -148,6 +159,92 @@ export default function HotTakes() {
     );
   }
 
+  // Mobile ticker view
+  if (isMobile) {
+    return (
+      <div className="hot-takes-ticker">
+        <div className="ticker-label">🔥</div>
+        <div className="ticker-scroll">
+          <div className="ticker-content">
+            {[...takes, ...takes].map((take, index) => (
+              <span 
+                key={`${take.id}-${index}`} 
+                className="ticker-item"
+                onClick={() => askThropToElaborate(take)}
+              >
+                <strong>{take.topic}:</strong> {take.take}
+                <span className="ticker-separator">••</span>
+              </span>
+            ))}
+          </div>
+        </div>
+        
+        <style jsx>{`
+          .hot-takes-ticker {
+            display: flex;
+            align-items: center;
+            background: #ffb088;
+            border-bottom: 3px solid black;
+            height: 48px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+          }
+
+          .ticker-label {
+            position: absolute;
+            left: 12px;
+            z-index: 2;
+            font-size: 20px;
+            background: #ffb088;
+            padding-right: 8px;
+          }
+
+          .ticker-scroll {
+            flex: 1;
+            overflow: hidden;
+            padding-left: 40px;
+          }
+
+          .ticker-content {
+            display: flex;
+            white-space: nowrap;
+            animation: scroll 30s linear infinite;
+          }
+
+          @keyframes scroll {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+
+          .ticker-item {
+            padding: 0 1rem;
+            font-size: 13px;
+            color: black;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .ticker-item strong {
+            font-weight: bold;
+            color: #333;
+          }
+
+          .ticker-separator {
+            color: #666;
+            margin: 0 0.5rem;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <div className="hot-takes-container">
       {/* Header */}
@@ -243,6 +340,7 @@ export default function HotTakes() {
       </div>
 
       <style jsx>{`
+        /* Desktop container styles */
         .hot-takes-container {
           height: 100%;
           display: flex;
@@ -251,32 +349,6 @@ export default function HotTakes() {
           border: 4px solid black;
           border-radius: 15px;
           overflow: hidden;
-        }
-
-        /* Mobile styles - horizontal scroll */
-        @media (max-width: 768px) {
-          .hot-takes-container {
-            height: auto;
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-            border-top: none;
-            margin-bottom: 1rem;
-          }
-
-          .hot-takes-list {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-          }
-
-          .hot-take-item {
-            flex: 0 0 280px;
-            scroll-snap-align: start;
-          }
         }
 
         /* Desktop styles - vertical scroll */

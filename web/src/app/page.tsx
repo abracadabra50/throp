@@ -20,15 +20,38 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Random position offsets for elements
-  const [randomOffsets] = useState(() => ({
-    title: Math.random() * 6 - 3,
-    button: Math.random() * 6 - 3,
-    throp: Math.random() * 10 - 5,
-  }));
+  // Random values for UI elements (initialized to 0 to avoid hydration mismatch)
+  const [randomOffsets, setRandomOffsets] = useState({
+    title: 0,
+    button: 0,
+    throp: 0,
+  });
 
-  // Load saved messages from localStorage
+  // Random values for background doodles (8 doodles)
+  const [doodlePositions, setDoodlePositions] = useState<Array<{top: number, left: number, rotate: number}>>([]);
+  
+  // Random values for message bubbles
+  const [messageRotations, setMessageRotations] = useState<Map<string, {avatar: number, bubble: number}>>(new Map());
+
+  // Load saved messages from localStorage and set random offsets
   useEffect(() => {
+    // Set random offsets on client side only to avoid hydration mismatch
+    setRandomOffsets({
+      title: Math.random() * 6 - 3,
+      button: Math.random() * 6 - 3,
+      throp: Math.random() * 10 - 5,
+    });
+
+    // Set doodle positions for background
+    setDoodlePositions(
+      Array.from({ length: 8 }, () => ({
+        top: Math.random() * 100,
+        left: Math.random() * 100,
+        rotate: Math.random() * 360,
+      }))
+    );
+
+    // Load saved messages
     const saved = localStorage.getItem('throp-messages');
     if (saved) {
       try {
@@ -40,12 +63,26 @@ export default function Home() {
     }
   }, []);
 
-  // Save messages to localStorage
+  // Save messages to localStorage and generate random rotations for new messages
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem('throp-messages', JSON.stringify(messages));
+      
+      // Generate random rotations for any new messages
+      const newRotations = new Map(messageRotations);
+      messages.forEach(msg => {
+        if (!newRotations.has(msg.id)) {
+          newRotations.set(msg.id, {
+            avatar: Math.random() * 20 - 10,
+            bubble: Math.random() * 3 - 1.5,
+          });
+        }
+      });
+      if (newRotations.size !== messageRotations.size) {
+        setMessageRotations(newRotations);
+      }
     }
-  }, [messages]);
+  }, [messages, messageRotations]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -355,14 +392,14 @@ export default function Home() {
     <div className="h-screen flex flex-col" style={{ background: '#fefdfb' }}>
       {/* Background doodles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-        {[...Array(8)].map((_, i) => (
+        {doodlePositions.map((pos, i) => (
           <div 
             key={i}
             className="absolute"
             style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              transform: `rotate(${Math.random() * 360}deg)`,
+              top: `${pos.top}%`,
+              left: `${pos.left}%`,
+              transform: `rotate(${pos.rotate}deg)`,
             }}
           >
             <Image src="/throp-actual.svg" alt="" width={80} height={80} />
@@ -467,36 +504,37 @@ export default function Home() {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex gap-4 ${
+                    className={`flex gap-3 mb-4 ${
                       message.role === 'user' ? 'justify-end' : 'justify-start'
                     }`}
                   >
                     {message.role === 'assistant' && (
-                      <div className="flex-shrink-0 mt-2">
+                      <div className="flex-shrink-0 self-end mb-2">
                         <Image 
                           src="/throp-actual.svg" 
                           alt="throp" 
-                          width={60} 
-                          height={60}
-                          style={{ transform: `rotate(${Math.random() * 20 - 10}deg)` }}
+                          width={45} 
+                          height={45}
+                          className="wobble"
+                          style={{ transform: `rotate(${messageRotations.get(message.id)?.avatar || 0}deg)` }}
                         />
                       </div>
                     )}
                     
-                    <div className="flex flex-col gap-2">
-                      <div
-                        className={message.role === 'user' ? 'bubble-user' : 'bubble-throp'}
+                    <div className={`flex flex-col gap-2 ${message.role === 'user' ? 'items-end' : 'items-start'}`} 
+                         style={{ maxWidth: message.role === 'user' ? '70%' : '65%' }}>
+                      <div 
+                        className={`${message.role === 'user' ? 'bubble-user' : 'bubble-throp'} transition-all hover:scale-[1.02]`}
                         style={{ 
-                          maxWidth: '100%',
-                          transform: `rotate(${Math.random() * 3 - 1.5}deg)`,
-                          fontSize: '18px',
-                          padding: '16px 24px',
-                          cursor: 'pointer'
+                          transform: `rotate(${(messageRotations.get(message.id)?.bubble || 0) * 0.3}deg)`,
+                          fontSize: '15px',
+                          cursor: 'pointer',
+                          lineHeight: '1.5'
                         }}
                         onClick={() => copyMessage(message.content)}
                         title="Click to copy"
                       >
-                        <p className={message.role === 'user' ? 'text-white' : 'text-black'}>
+                        <p className={message.role === 'user' ? 'text-white font-medium' : 'text-black'} style={{ margin: 0 }}>
                           {message.content}
                         </p>
                       </div>

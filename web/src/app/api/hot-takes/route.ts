@@ -120,44 +120,44 @@ function categoriseTrend(name: string): string {
   return 'news';
 }
 
-// More realistic current trending topics (August 2025)
+// More realistic current trending topics (August 2025) 
 const getMockTrends = () => {
   const currentTopics = [
     { 
-      name: 'Barbenheimer Anniversary', 
-      volume: '456K posts',
-      context: 'One year since the cultural phenomenon',
-      category: 'entertainment'
-    },
-    { 
-      name: 'GPT-5 Release', 
+      name: '#HeatDome2025', 
       volume: '892K posts',
-      context: 'OpenAI announces GPT-5 with AGI capabilities',
-      category: 'tech'
-    },
-    { 
-      name: 'Drake vs Kendrick', 
-      volume: '567K posts',
-      context: 'New diss tracks dropped overnight',
-      category: 'entertainment'
-    },
-    { 
-      name: 'Heat Wave', 
-      volume: '445K posts',
-      context: 'Record breaking temperatures across US',
+      context: 'Extreme temps hit 125°F in Phoenix, power grid struggles',
       category: 'news'
     },
     { 
-      name: 'Solana at $500', 
+      name: 'iPhone 17 Pro', 
+      volume: '567K posts',
+      context: 'Leaked specs show AI-powered holographic display',
+      category: 'tech'
+    },
+    { 
+      name: '#BackToSchoolNightmare', 
+      volume: '445K posts',
+      context: 'Parents losing it over $500 supply lists',
+      category: 'news'
+    },
+    { 
+      name: 'SOL Flips ETH', 
       volume: '678K posts',
-      context: 'SOL price pumping to new ATH',
+      context: 'Solana briefly overtakes Ethereum market cap',
       category: 'crypto'
     },
     { 
-      name: 'Marvel Phase 7', 
-      volume: '234K posts',
-      context: 'New MCU phase announced at Comic Con',
+      name: 'Drake Quits Music', 
+      volume: '823K posts',
+      context: 'Announces retirement after losing another beef',
       category: 'entertainment'
+    },
+    { 
+      name: 'TikTok Ban Update', 
+      volume: '234K posts',
+      context: 'Supreme Court ruling expected next week',
+      category: 'tech'
     },
     { 
       name: 'iPhone 17', 

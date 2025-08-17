@@ -5,6 +5,21 @@ All notable changes to Throp will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2025-08-17
+
+### Fixed
+- **Trending Topics Accuracy**: Removed incorrect Olympics 2025 reference (Olympics were in Paris 2024)
+- **August 2025 Context**: Updated Claude prompts to generate relevant summer topics
+- **Port Conflict Handling**: App now auto-selects available port when 3000 is in use
+- **Server Startup**: Fixed issue where Twitter bot was starting instead of web server
+- **React Hydration Errors**: Fixed Math.random() mismatch issues between server and client
+
+### Changed
+- **Trending Topics**: Now using more relevant August 2025 topics like heatwave alerts, back-to-school, summer entertainment
+- **Claude Prompts**: Removed Olympics references, added proper seasonal context
+- **Mobile Hot Takes**: Converted from large cards to compact rolling ticker (48px height) for more chat space
+- **Mobile UX**: Hot takes now scroll continuously as a ticker, clickable to elaborate in chat
+
 ## [0.4.3] - 2025-01-09
 
 ### 🔥 HOT TAKES FEATURE - Gen Z Commentary on Trending Topics
