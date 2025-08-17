@@ -175,9 +175,11 @@ When discussing crypto/markets, always check current prices and on-chain data.`;
         catch (error) {
             if (error.response) {
                 const errorBody = await error.response.text();
-                logger.error('Perplexity API error', {
+                logger.error('Perplexity API error details:', {
                     status: error.response.status,
                     body: errorBody,
+                    model: this.model,
+                    url: this.apiUrl,
                 });
                 if (error.response.status === 429) {
                     throw new Error('Perplexity rate limit exceeded. Please try again later.');

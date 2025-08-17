@@ -87,7 +87,7 @@ export default function About() {
           <Image src="/throp-actual.svg" alt="throp" width={45} height={45} className="wobble" />
           <span className="font-bold text-2xl">throp</span>
         </Link>
-        <div className="text-sm text-gray-600">about • august 2025</div>
+        <div className="text-sm text-gray-600">about</div>
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-12 md:px-12">

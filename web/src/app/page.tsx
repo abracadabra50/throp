@@ -389,7 +389,7 @@ export default function Home() {
             >
               about
             </a>
-            <span className="text-sm text-gray-600">august 2025</span>
+
           </div>
         </header>
 
