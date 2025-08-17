@@ -35,7 +35,8 @@ PORT=3001
 # ============================================
 # REQUIRED - Enable Twitter Bot Features
 # ============================================
-API_ONLY_MODE=false
+# Don't set API_ONLY_MODE at all (defaults to false)
+# API_ONLY_MODE=true  # Only set this if you want to disable Twitter features
 ENABLE_MENTION_POLLING=true
 MENTION_POLL_INTERVAL=60000
 

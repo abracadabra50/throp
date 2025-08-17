@@ -45,10 +45,14 @@ export class ApiServer {
         if (!isApiOnly) {
             try {
                 this.twitterClient = new TwitterClient();
+                logger.info('Twitter client initialized successfully');
             }
             catch (error) {
                 logger.warn('Twitter client initialization failed - Twitter features disabled', error);
             }
+        }
+        else {
+            logger.info('API-only mode - Twitter client not initialized');
         }
         // Try to initialize answer engine, but don't crash if it fails
         try {
@@ -237,11 +241,13 @@ export class ApiServer {
         this.app.get('/api/mentions', async (req, res) => {
             try {
                 if (!this.twitterClient) {
+                    logger.error('Twitter client is null');
                     return res.status(503).json({
                         success: false,
                         error: 'Twitter functionality not available in API-only mode',
                     });
                 }
+                logger.info('Fetching mentions via API endpoint...');
                 // Get mentions using the proper Twitter API with Bearer Token
                 const limit = parseInt(req.query.limit) || 10;
                 const mentions = await this.twitterClient.getMentions(undefined, limit);
@@ -258,6 +264,34 @@ export class ApiServer {
                 });
             }
             catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Manual trigger for mention polling (for debugging)
+        this.app.post('/api/mentions/trigger', async (_req, res) => {
+            try {
+                if (!this.twitterClient) {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'Twitter client not initialized',
+                    });
+                }
+                logger.info('Manually triggering mention check...');
+                await this.checkAndProcessMentions();
+                return res.json({
+                    success: true,
+                    message: 'Mention check triggered',
+                    stats: {
+                        processed: this.processedMentions.size,
+                        lastId: this.lastMentionId,
+                    },
+                });
+            }
+            catch (error) {
+                logger.error('Manual mention check failed', error);
                 return res.status(500).json({
                     success: false,
                     error: error.message,
