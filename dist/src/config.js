@@ -44,7 +44,7 @@ export function loadConfig() {
             },
             perplexity: {
                 apiKey: process.env.PERPLEXITY_API_KEY,
-                model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-online',
+                model: process.env.PERPLEXITY_MODEL || 'sonar-small-chat',
             },
             bot: {
                 answerEngine: process.env.ANSWER_ENGINE || 'hybrid-claude',

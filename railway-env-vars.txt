@@ -32,6 +32,7 @@ PORT=3001
 # ============================================
 # OPTIONAL - Feature Configuration
 # ============================================
+PERPLEXITY_MODEL=sonar-small-chat
 CHAOS_LEVEL=7
 ENABLE_PROACTIVE_TWEETS=false
 ENABLE_QUOTE_MONITOR=false
