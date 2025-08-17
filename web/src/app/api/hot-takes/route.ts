@@ -156,7 +156,13 @@ Remember it's late summer 2025, hot weather, back-to-school season, everyone chr
 
 ${randomSeed > 0.7 ? 'Start with something like: the way, imagine, wild how, cant believe' : ''}
 ${randomSeed > 0.5 ? 'Include words like: lowkey, giving, its the ___ for me, no but' : ''}
-${randomSeed > 0.3 ? 'Be extra cynical' : 'Be casually dismissive'}
+${randomSeed > 0.3 ? 'Be extra cynical and roast everyone involved' : 'Be casually dismissive'}
+
+Roast the people who care about this topic, like:
+- "y'all really [doing thing] and thinking you did something"
+- "the [type of person] to [thing] pipeline is real"
+- "tell me you're [thing] without telling me"
+- "imagine being pressed about [topic] couldn't be me"
 
 Keep it under 20 words. Be accurate but unhinged. Natural gen z voice, not forced.
 Just the take, nothing else:`;

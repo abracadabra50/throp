@@ -1,6 +1,6 @@
 # Changelog
 
-## [2025-08-17] - Claude Model Update & OAuth2 Support + Real-time Mentions
+## [2025-08-17] - Claude Model Update & OAuth2 Support + Real-time Mentions + Friendly Roasting
 ### Fixed
 - Updated Claude model to `claude-sonnet-4-20250514` as specified
 - Model now uses exact string as requested
