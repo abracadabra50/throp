@@ -1,5 +1,10 @@
 # Changelog
 
+## [2025-08-17] - Claude Model Update
+### Fixed
+- Updated Claude model to `claude-sonnet-4-20250514` as specified
+- Model now uses exact string as requested
+
 ## [2024-12-31] - Subdomain Support & Complete API Fixes
 ### Fixed
 - **Fixed Railway deployment health check failures**:

@@ -30,7 +30,7 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
         this.anthropic = new Anthropic({
             apiKey: anthropicKey,
         });
-        this.model = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
+        this.model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
     }
     /**
      * Validate configuration (required by base class)
