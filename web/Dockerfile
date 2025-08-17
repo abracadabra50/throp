@@ -1,7 +1,14 @@
-# Dockerfile for Throp Web Interface - v2
+# Dockerfile for Throp Web Interface - v3 FORCE REBUILD
 FROM node:20-slim
 
 WORKDIR /app
+
+# Install system dependencies for canvas/sharp if needed
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -12,14 +19,11 @@ RUN npm ci --legacy-peer-deps
 # Copy all source files
 COPY . .
 
-# Install SWC dependencies after copying files
-RUN npm install
-
 # Build Next.js app
 RUN npm run build
 
 # Expose port
 EXPOSE 3000
 
-# Start the Next.js app
-CMD ["npm", "start"]
+# Start the Next.js app with PORT from environment
+CMD ["sh", "-c", "npm start"]
