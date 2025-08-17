@@ -209,7 +209,6 @@ When discussing crypto/markets, always check current prices and on-chain data.`;
           ],
           max_tokens: this.maxTokens,
           temperature: this.temperature,
-          top_p: 0.9,
           stream: false,
         },
         timeout: 30000, // 30 second timeout

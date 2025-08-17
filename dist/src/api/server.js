@@ -119,6 +119,15 @@ export class ApiServer {
     setupRoutes() {
         // Mount tweet routes
         this.app.use('/api/tweet', createTweetRoutes());
+        // Root endpoint - simple response
+        this.app.get('/', (_req, res) => {
+            res.json({
+                service: 'throp-api',
+                status: 'running',
+                health: '/health',
+                docs: 'https://github.com/abracadabra50/throp'
+            });
+        });
         // Health check (required for Railway deployment)
         this.app.get('/health', (_req, res) => {
             const health = {
