@@ -14,5 +14,8 @@ RUN npm pkg delete scripts.prepare && \
 # Expose port
 EXPOSE 3001
 
-# Run directly
-CMD ["node", "dist/api/server.js"]
+# Set default answer engine
+ENV ANSWER_ENGINE=hybrid-claude
+
+# Run the API server (not the bot directly)
+CMD ["node", "dist/src/api/start.js"]
