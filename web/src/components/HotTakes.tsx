@@ -18,7 +18,7 @@ export default function HotTakes() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [userAgreements, setUserAgreements] = useState<Set<string>>(new Set());
+
   const [isMobile, setIsMobile] = useState(false);
 
   // Fetch trending topics and generate takes
@@ -98,16 +98,7 @@ export default function HotTakes() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAgree = (takeId: string) => {
-    if (userAgreements.has(takeId)) return;
-    
-    setUserAgreements(prev => new Set(prev).add(takeId));
-    setTakes(prev => prev.map(take => 
-      take.id === takeId 
-        ? { ...take, agreeCount: take.agreeCount + 1 }
-        : take
-    ));
-  };
+
 
   const shareToTwitter = (take: Take) => {
     const text = `${take.take}\n\n- throp on "${take.topic}"`;
@@ -300,15 +291,6 @@ export default function HotTakes() {
 
             {/* Actions */}
             <div className="take-actions">
-              <button
-                onClick={() => handleAgree(take.id)}
-                className={`agree-button ${userAgreements.has(take.id) ? 'agreed' : ''}`}
-                disabled={userAgreements.has(take.id)}
-              >
-                <span className="agree-emoji">💯</span>
-                <span className="agree-count">{take.agreeCount}</span>
-              </button>
-
               <button
                 onClick={() => shareToTwitter(take)}
                 className="share-button"

@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
+import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -17,8 +19,11 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [commandSuggestions, setCommandSuggestions] = useState<SlashCommand[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
 
   // Random values for UI elements (initialized to 0 to avoid hydration mismatch)
   const [randomOffsets, setRandomOffsets] = useState({
@@ -126,12 +131,63 @@ export default function Home() {
     };
     
     window.addEventListener('throp-elaborate', handleElaborate as EventListener);
-    return () => window.removeEventListener('throp-elaborate', handleElaborate as EventListener);
+    
+    // Add event listener for toggling hot takes via slash command
+    const handleToggleHotTakes = () => {
+      const hotTakesButton = document.querySelector('[data-hot-takes-button]') as HTMLButtonElement;
+      if (hotTakesButton) {
+        hotTakesButton.click();
+      }
+    };
+    
+    window.addEventListener('toggleHotTakes', handleToggleHotTakes);
+    
+    return () => {
+      window.removeEventListener('throp-elaborate', handleElaborate as EventListener);
+      window.removeEventListener('toggleHotTakes', handleToggleHotTakes);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+
+    // Check for slash commands
+    if (input.startsWith('/')) {
+      const result = executeSlashCommand(input);
+      
+      if (result) {
+        // Add user message to show the command
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: input,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, userMessage]);
+        
+        // Handle different command result types
+        if (result.type === 'message') {
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: result.content || '',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, botMessage]);
+        } else if (result.type === 'clear') {
+          setMessages([]);
+        } else if (result.type === 'redirect' && result.url) {
+          router.push(result.url);
+        } else if (result.type === 'action' && result.action) {
+          result.action();
+        }
+        
+        setInput('');
+        setCommandSuggestions([]);
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -143,6 +199,7 @@ export default function Home() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setCommandSuggestions([]);
 
     try {
       const messagesToSend = [...messages, userMessage].map(m => ({
@@ -811,13 +868,81 @@ export default function Home() {
           {/* Input Area */}
           <div className="flex-shrink-0 border-t-4 border-black bg-gradient-to-t from-[#fefdfb] via-[#fefdfb] to-transparent">
             <div className="max-w-4xl mx-auto px-6 py-6">
+              {/* Command Suggestions */}
+              {commandSuggestions.length > 0 && (
+                <div className="mb-2 bg-white border-4 border-black rounded-lg overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                  {commandSuggestions.map((cmd, index) => (
+                    <div
+                      key={cmd.command}
+                      className={`px-4 py-2 cursor-pointer transition-colors ${
+                        index === selectedSuggestion
+                          ? 'bg-gradient-to-r from-orange-200 to-yellow-100'
+                          : 'hover:bg-orange-50'
+                      }`}
+                      onClick={() => {
+                        setInput(cmd.command + ' ');
+                        setCommandSuggestions([]);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-orange-600">{cmd.command}</span>
+                        <span className="text-sm text-gray-600">{cmd.description}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <form onSubmit={handleSubmit} className="flex gap-4">
                 <textarea
                   ref={inputRef}
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="type somethin... or just mash ur keyboard idc"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setInput(value);
+                    
+                    // Show command suggestions when typing /
+                    if (value.startsWith('/')) {
+                      const suggestions = getCommandSuggestions(value);
+                      setCommandSuggestions(suggestions);
+                      setSelectedSuggestion(0);
+                    } else {
+                      setCommandSuggestions([]);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Handle command suggestion navigation
+                    if (commandSuggestions.length > 0) {
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setSelectedSuggestion(prev => 
+                          prev > 0 ? prev - 1 : commandSuggestions.length - 1
+                        );
+                        return;
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setSelectedSuggestion(prev => 
+                          prev < commandSuggestions.length - 1 ? prev + 1 : 0
+                        );
+                        return;
+                      } else if (e.key === 'Tab' || (e.key === 'Enter' && commandSuggestions.length > 0)) {
+                        e.preventDefault();
+                        const selected = commandSuggestions[selectedSuggestion];
+                        if (selected) {
+                          setInput(selected.command + ' ');
+                          setCommandSuggestions([]);
+                        }
+                        return;
+                      } else if (e.key === 'Escape') {
+                        setCommandSuggestions([]);
+                        return;
+                      }
+                    }
+                    
+                    handleKeyDown(e);
+                  }}
+                  placeholder="type somethin... or just mash ur keyboard idc (try /help)"
                   rows={2}
                   className="scuffed-input flex-1 text-lg"
                   style={{
