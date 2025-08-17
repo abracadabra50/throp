@@ -1,31 +1,8 @@
-# Railway deployment configuration for Throp
-
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npm run start:api"
-healthcheckPath = "/health"
-healthcheckTimeout = 300
+startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
-
-[services]
-
-# API Service (for web interface)
-[[services]]
-name = "api"
-startCommand = "npm run start:api"
-
-# Bot Service (optional - uncomment if needed)
-# [[services]]
-# name = "bot"
-# startCommand = "npm start"
-
-# Environment variables to set in Railway dashboard:
-# API_ONLY_MODE=true
-# PERPLEXITY_API_KEY=pplx-xxx
-# ADMIN_API_KEY=admin_xxx
-# REDIS_URL=${{Redis.REDIS_URL}}
-# FRONTEND_URL=https://your-frontend.vercel.app
+restartPolicyMaxRetries = 10
