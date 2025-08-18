@@ -329,6 +329,34 @@ export class TwitterClient {
    * @param conversationId The conversation ID
    * @returns Array of tweets in the conversation
    */
+  /**
+   * Get trending topics from Twitter
+   * @param woeid Where On Earth ID (1 for worldwide)
+   * @returns Array of trending topics
+   */
+  async getTrendingTopics(woeid: number = 1): Promise<any[]> {
+    try {
+      logger.info("Fetching trending topics from Twitter", { woeid });
+      
+      const trends = await this.executeWithRetry(async () => {
+        // Use v1 API for trends (v2 does not have trends endpoint yet)
+        return await this.readClient.v1.trendsByPlace(woeid);
+      });
+      
+      if (trends && trends.length > 0 && trends[0].trends) {
+        const trendsList = trends[0].trends;
+        logger.info(`Fetched ${trendsList.length} trending topics`);
+        return trendsList;
+      }
+      
+      return [];
+    } catch (error) {
+      logger.error("Failed to fetch trending topics", error);
+      // Return empty array instead of throwing to allow fallback
+      return [];
+    }
+  }
+
   async getConversation(conversationId: string): Promise<TweetV2[]> {
     try {
       const response = await this.executeWithRetry(async () => {
@@ -400,8 +428,17 @@ export class TwitterClient {
       });
     }
     
-    // Process mentions
-    return response.data.data.map((tweet: TweetV2): TwitterMention => {
+    // Process mentions - EXCLUDE tweets from the bot itself
+    return response.data.data
+      .filter((tweet: TweetV2) => {
+        // Exclude tweets authored by the bot itself
+        if (tweet.author_id === this.config.twitter.botUserId) {
+          logger.info(`Excluding self-tweet: ${tweet.id}`);
+          return false;
+        }
+        return true;
+      })
+      .map((tweet: TweetV2): TwitterMention => {
       const author = users.get(tweet.author_id!);
       
       // Get referenced tweets

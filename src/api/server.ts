@@ -244,7 +244,7 @@ export class ApiServer {
         return;
       }
       
-      await handleHotTakes(req, res, this.answerEngine);
+      await handleHotTakes(req, res);
     });
     
     // Chat endpoint - main API for web interface

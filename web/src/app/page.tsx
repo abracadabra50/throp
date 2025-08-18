@@ -271,8 +271,8 @@ export default function Home() {
       const response = await (async () => {
       let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/chat';
       
-      // Always use proxy for production to avoid CORS
-      if (!apiUrl.includes('localhost')) {
+      // Use proxy endpoint for all non-direct backend URLs
+      if (!apiUrl.includes('localhost') && !apiUrl.includes('run.app')) {
         console.log('Using proxy for production API');
         apiUrl = '/api/proxy';
       }

@@ -66,6 +66,12 @@ export declare class TwitterClient {
      * @param conversationId The conversation ID
      * @returns Array of tweets in the conversation
      */
+    /**
+     * Get trending topics from Twitter
+     * @param woeid Where On Earth ID (1 for worldwide)
+     * @returns Array of trending topics
+     */
+    getTrendingTopics(woeid?: number): Promise<any[]>;
     getConversation(conversationId: string): Promise<TweetV2[]>;
     /**
      * Execute a Twitter API call with retry logic

@@ -174,4 +174,4 @@ export async function handleHotTakes(_req, res) {
         });
     }
 }
-//# sourceMappingURL=hot-takes-endpoint.js.map
+//# sourceMappingURL=hot-takes-old.js.map
