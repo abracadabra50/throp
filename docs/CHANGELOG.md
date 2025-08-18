@@ -1,6 +1,12 @@
 # Changelog
 
-## [2025-01-14] - CI/CD Overhaul & Twitter Bot Fix
+## [2025-01-14] - CI/CD Overhaul, Twitter Bot Fix & Redis Integration
+
+### Redis Integration for Duplicate Prevention 🗄️
+- **Google Cloud Memorystore**: Set up Redis instance (throp-redis) in us-central1
+- **VPC Connector**: Created throp-connector for Cloud Run to Redis communication
+- **Persistent Storage**: Bot now remembers processed tweets across restarts
+- **No More Duplicates**: Processed mention IDs stored in Redis with 7-day TTL
 
 ### Critical Twitter Bot Fix 🚨
 - **Twitter Mentions**: Switched from `userMentionTimeline` to `search` API to fix 401 errors
