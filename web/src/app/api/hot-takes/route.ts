@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Use Node.js runtime for Netlify compatibility
+export const runtime = 'nodejs';
+
 /**
  * Hot Takes API Route
  * Fetches hot takes from the backend server which handles generation without timeout issues

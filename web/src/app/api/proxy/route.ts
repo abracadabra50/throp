@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
-// Remove edge runtime - causing issues on Netlify
-// export const runtime = 'edge';
+// Use Node.js runtime for Netlify compatibility
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
