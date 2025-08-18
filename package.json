@@ -1,6 +1,6 @@
 {
   "name": "throp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "lowercase chaotic twitter / x bot for responding to user mentions with ai-generated answers and proactive tweets.",
   "type": "module",
   "main": "dist/index.js",
