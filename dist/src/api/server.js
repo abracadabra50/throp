@@ -13,6 +13,7 @@ import { TwitterClient } from '../twitter/client.js';
 import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
 import { createTweetRoutes } from './tweet-endpoints.js';
 import { RedisCache } from '../cache/redis.js';
+import { handleHotTakes } from './hot-takes-endpoint.js';
 /**
  * Create and configure the API server
  */
@@ -171,6 +172,18 @@ export class ApiServer {
             }
         });
         // Chat endpoint for web interface
+        // Hot takes endpoint - generates trending topics with hot takes
+        this.app.get('/api/hot-takes', async (req, res) => {
+            if (!this.answerEngine) {
+                res.status(503).json({
+                    success: false,
+                    error: 'Answer engine not available',
+                });
+                return;
+            }
+            await handleHotTakes(req, res, this.answerEngine);
+        });
+        // Chat endpoint - main API for web interface
         this.app.post('/api/chat', async (req, res) => {
             try {
                 const { message, context } = req.body;
@@ -368,6 +381,120 @@ export class ApiServer {
                 });
             }
             catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Twitter diagnostics endpoint - simplified to avoid hanging
+        this.app.get('/api/twitter/diagnostics', async (_req, res) => {
+            try {
+                const config = getConfig();
+                const hasApiKey = !!config.twitter?.apiKey;
+                const hasApiSecret = !!config.twitter?.apiSecretKey;
+                const hasAccessToken = !!config.twitter?.accessToken;
+                const hasAccessSecret = !!config.twitter?.accessTokenSecret;
+                const hasBearerToken = !!config.twitter?.bearerToken;
+                const hasBotUserId = !!config.twitter?.botUserId;
+                // Don't test actual API calls - just check configuration
+                const canWrite = hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret;
+                const canRead = hasBearerToken && hasBotUserId;
+                // Get initialization details
+                const initializationDetails = {
+                    hasOAuth1Client: hasApiKey && hasAccessToken,
+                    hasBearerClient: hasBearerToken,
+                    clientMode: (hasApiKey && hasAccessToken) ? 'OAuth 1.0a' : hasBearerToken ? 'Bearer Token Only' : 'None',
+                };
+                res.json({
+                    success: true,
+                    oauth1: {
+                        hasApiKey,
+                        hasApiSecret,
+                        hasAccessToken,
+                        hasAccessSecret,
+                        apiKeyLength: config.twitter?.apiKey?.length || 0,
+                        accessTokenLength: config.twitter?.accessToken?.length || 0,
+                        configured: hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret,
+                    },
+                    oauth2: {
+                        hasBearerToken,
+                        hasBotUserId,
+                        bearerTokenLength: config.twitter?.bearerToken?.length || 0,
+                        botUserId: config.twitter?.botUserId,
+                        configured: hasBearerToken && hasBotUserId,
+                    },
+                    capabilities: {
+                        canRead,
+                        canWrite,
+                        clientInitialized: !!this.twitterClient,
+                    },
+                    initialization: initializationDetails,
+                });
+            }
+            catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        });
+        // Check raw environment variables (for debugging)
+        this.app.get('/api/env-check', (_req, res) => {
+            res.json({
+                hasApiKey: !!process.env.TWITTER_API_KEY,
+                hasApiSecret: !!process.env.TWITTER_API_SECRET_KEY,
+                hasAccessToken: !!process.env.TWITTER_ACCESS_TOKEN,
+                hasAccessSecret: !!process.env.TWITTER_ACCESS_TOKEN_SECRET,
+                hasBearerToken: !!process.env.TWITTER_BEARER_TOKEN,
+                hasBotUserId: !!process.env.TWITTER_BOT_USER_ID,
+                apiKeyLength: process.env.TWITTER_API_KEY?.length || 0,
+                accessTokenLength: process.env.TWITTER_ACCESS_TOKEN?.length || 0,
+                // Show first 5 chars of each (safe to debug)
+                apiKeyPrefix: process.env.TWITTER_API_KEY?.substring(0, 5) || 'NOT_SET',
+                accessTokenPrefix: process.env.TWITTER_ACCESS_TOKEN?.substring(0, 5) || 'NOT_SET',
+            });
+        });
+        // Twitter test tweet endpoint (for debugging OAuth 1.0a)
+        this.app.post('/api/twitter/test-tweet', async (req, res) => {
+            try {
+                if (!this.twitterClient) {
+                    res.status(500).json({
+                        success: false,
+                        error: 'Twitter client not initialized',
+                    });
+                    return;
+                }
+                const { testMode = true } = req.body;
+                if (testMode) {
+                    // Just check if we COULD tweet
+                    const config = getConfig();
+                    const canTweet = !!(config.twitter?.apiKey &&
+                        config.twitter?.apiSecretKey &&
+                        config.twitter?.accessToken &&
+                        config.twitter?.accessTokenSecret);
+                    res.json({
+                        success: true,
+                        testMode: true,
+                        canTweet,
+                        message: canTweet ?
+                            'OAuth 1.0a is configured, bot should be able to tweet' :
+                            'OAuth 1.0a not fully configured, cannot tweet',
+                    });
+                    return;
+                }
+                // Actually post a test tweet (only if explicitly requested)
+                const timestamp = Date.now();
+                const tweet = await this.twitterClient.tweet(`Test tweet from Throp bot - ${timestamp}`);
+                res.json({
+                    success: true,
+                    testMode: false,
+                    tweetId: tweet.id,
+                    message: 'Test tweet posted successfully!',
+                });
+            }
+            catch (error) {
+                logger.error('Test tweet failed', error);
                 res.status(500).json({
                     success: false,
                     error: error.message,

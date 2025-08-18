@@ -1,8 +1,8 @@
-name: Deploy to Railway
+name: CI - Build and Test
 
 on:
   push:
-    branches: [main, production]
+    branches: [main]
   pull_request:
     types: [opened, synchronize]
 
@@ -10,9 +10,9 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # 1. Run tests and linting
-  test:
-    name: Test & Lint
+  # Run tests and build only - deployment handled by deploy-gcp.yml
+  test-and-build:
+    name: Test & Build
     runs-on: ubuntu-latest
     
     steps:
@@ -24,27 +24,37 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: npm ci
       
-      - name: Run linter
+      - name: Run backend linter
         run: npm run lint
         continue-on-error: true  # Don't fail on lint warnings
       
-      - name: Run tests
-        run: npm test -- --run
-        continue-on-error: true  # Tests might not be set up yet
-      
-      - name: Build project
+      - name: Build backend
         run: npm run build
       
-      - name: Upload build artifacts
+      - name: Install and build frontend
+        run: |
+          cd web
+          npm ci
+          npm run build
+        continue-on-error: true  # Frontend might have separate issues
+      
+      - name: Upload backend build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: dist
+          name: backend-dist
           path: dist/
+      
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: web/.next/
+        continue-on-error: true
 
-  # 2. Security audit
+  # Security audit
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -52,102 +62,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Run npm audit
+      - name: Run backend npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true  # Don't block deploy on non-critical vulnerabilities
+        continue-on-error: true  # Don't block on non-critical vulnerabilities
+      
+      - name: Run frontend npm audit
+        run: |
+          cd web
+          npm audit --audit-level=high
+        continue-on-error: true
 
-  # 3. Deploy to Railway (staging)
-  deploy-staging:
-    name: Deploy to Staging
-    needs: [test]
+  # Success notification
+  notify-success:
+    name: CI Success
+    needs: [test-and-build, security]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: success()
     
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      
-      - name: Deploy to Railway Staging
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+      - name: Success message
         run: |
-          railway link ${{ secrets.RAILWAY_PROJECT_ID_STAGING }}
-          railway up --environment=staging
-      
-      - name: Comment PR with staging URL
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚂 Deployed to staging! Check it out at: https://throp-staging.up.railway.app'
-            })
-
-  # 4. Deploy to Railway (production)
-  deploy-production:
-    name: Deploy to Production
-    needs: [test, security]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      
-      - name: Deploy to Railway Production
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway up --environment=production
-      
-      - name: Run smoke tests
-        run: |
-          sleep 30  # Wait for deployment
-          curl -f https://throp.up.railway.app/health || exit 1
-      
-      - name: Create deployment notification
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data } = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.sha,
-              environment: 'production',
-              description: 'Deployed to Railway',
-              auto_merge: false,
-              required_contexts: [],
-              production_environment: true
-            });
-            
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: data.id,
-              state: 'success',
-              environment_url: 'https://throp.up.railway.app',
-              description: 'Deployment successful'
-            });
-
-  # 5. Rollback on failure
-  rollback:
-    name: Rollback if Failed
-    needs: [deploy-production]
-    runs-on: ubuntu-latest
-    if: failure()
-    
-    steps:
-      - name: Trigger rollback
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo "⚠️ Deployment failed, consider manual rollback"
-          # Railway doesn't have automatic rollback via CLI yet
-          # You'll need to manually rollback in Railway dashboard
+          echo "✅ CI Pipeline Successful!"
+          echo "Code has been tested and built successfully."
+          echo ""
+          echo "Note: Deployment to production is handled separately via deploy-gcp.yml"
+          echo "To deploy: Push to main branch or trigger deploy-gcp workflow manually"

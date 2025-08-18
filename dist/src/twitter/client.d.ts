@@ -17,6 +17,7 @@ export declare class TwitterApiError extends Error {
  */
 export declare class TwitterClient {
     private client;
+    private readClient;
     private v2Client;
     private readonly config;
     private rateLimits;

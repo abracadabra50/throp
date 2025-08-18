@@ -13,10 +13,8 @@
   # Node version for builds
   environment = { NODE_VERSION = "20", NEXT_TELEMETRY_DISABLED = "1", NPM_FLAGS = "--force" }
 
-# Netlify Functions (if you need serverless functions)
-[functions]
-  directory = "web/netlify/functions"
-  node_bundler = "esbuild"
+# Next.js API routes are handled by the Next.js runtime plugin
+# No separate functions directory needed
 
 # Headers for security and performance
 [[headers]]
@@ -44,11 +42,8 @@
   [headers.values]
     Cache-Control = "no-store, max-age=0"
 
-# Redirects for Next.js
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# Next.js API routes are handled by the Next.js runtime plugin
+# No need for redirects as the plugin handles this automatically
 
 # Next.js specific plugin
 [[plugins]]
@@ -56,12 +51,12 @@
 
 # Environment variables (these will be set in Netlify UI)
 [context.production.environment]
-  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://throp-bot-947985992378.us-central1.run.app/api/chat"
   NEXT_PUBLIC_BASE_URL = "https://chat.throp.ai"
 
 [context.deploy-preview.environment]
-  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://throp-bot-947985992378.us-central1.run.app/api/chat"
   NEXT_PUBLIC_BASE_URL = "https://deploy-preview--throp.netlify.app"
 
 [context.branch-deploy.environment]
-  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://throp-bot-947985992378.us-central1.run.app/api/chat"

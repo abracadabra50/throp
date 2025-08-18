@@ -14,6 +14,7 @@ import { TwitterClient } from '../twitter/client.js';
 import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
 import { createTweetRoutes } from './tweet-endpoints.js';
 import { RedisCache } from '../cache/redis.js';
+import { handleHotTakes } from './hot-takes-endpoint.js';
 import type { AnswerContext } from '../types.js';
 
 /**
@@ -231,6 +232,20 @@ export class ApiServer {
     });
     
     // Chat endpoint for web interface
+    // Hot takes endpoint - generates trending topics with hot takes
+    this.app.get('/api/hot-takes', async (req: Request, res: Response) => {
+      if (!this.answerEngine) {
+        res.status(503).json({
+          success: false,
+          error: 'Answer engine not available',
+        });
+        return;
+      }
+      
+      await handleHotTakes(req, res, this.answerEngine);
+    });
+    
+    // Chat endpoint - main API for web interface
     this.app.post('/api/chat', async (req: Request, res: Response) => {
       try {
         const { message, context } = req.body as ChatRequest;

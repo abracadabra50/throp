@@ -52,6 +52,63 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.0] - 2025-08-18
+
+### 🚀 Major Infrastructure Migration
+- **Migrated backend from Railway to Google Cloud Run** due to persistent deployment issues
+- Successfully deployed bot that now replies to Twitter mentions
+- Fixed OAuth 1.0a authentication issues that were preventing tweet posting
+
+### 🌐 Deployment Updates
+- **Frontend**: Deployed on Netlify with custom domains
+  - Main site: https://throp.ai
+  - Chat app: https://chat.throp.ai
+- **Backend**: Running on Google Cloud Run
+  - API: https://throp-bot-947985992378.us-central1.run.app
+  - Status endpoint for monitoring
+- **Environment**: All environment variables properly configured via Netlify CLI
+
+### ✅ Fixed Issues
+- Resolved OAuth 1.0a token issues (invalid Access Token and Secret)
+- Fixed Bearer Token implementation for reading mentions
+- Corrected `max_results` parameter range (5-100) for Twitter API
+- Fixed TypeScript compilation errors
+- Resolved Anthropic Claude API credit balance issue
+- Fixed frontend-backend connectivity via proper proxy configuration
+
+### 🎉 Confirmed Working Features
+- Twitter bot successfully posting replies to mentions
+- Real-time mention polling every 60 seconds
+- Hybrid Claude engine with Perplexity for facts + Claude for personality
+- Hot Takes generation with proper roasting personality
+- Slash commands in chat interface
+- Friendly roasting personality in responses
+
+### 📝 Documentation
+- Created GCP deployment scripts and guides
+- Updated environment variable documentation
+- Added Netlify custom domain setup guide
+
+### 🐛 Latest Fixes (Post-Deployment)
+- **Fixed API route failures on Netlify**: Removed 'edge' runtime from proxy route which was causing 502 errors
+- **Updated all API endpoints**: Proxy, hot-takes, and trending-prompts now pointing to GCP backend
+- **Verified all features working**: Chat responses, hot takes generation, and trending prompts all functional
+
+### ✅ Hot Takes Fixed!
+- **Solution Implemented**: Moved hot takes generation to GCP backend
+  - Created `/api/hot-takes` endpoint on backend (no timeout limits)
+  - Backend fetches real trending topics using Perplexity
+  - Generates hot takes with Claude's chaotic personality
+  - Caches results for 30 minutes for fast responses
+  - Frontend simply fetches from backend (no more timeouts!)
+  
+### 🚀 All Features Now Working
+- **Hot Takes**: Real-time trending topics with chaotic takes (via backend)
+- **Chat Interface**: Full Throp personality with real-time responses
+- **Twitter Bot**: Actively replying to mentions every 60 seconds
+- **Trending Prompts**: Generating relevant conversation starters
+- **Frontend/Backend**: Fully connected via GCP Cloud Run + Netlify
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

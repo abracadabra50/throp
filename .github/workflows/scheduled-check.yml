@@ -8,32 +8,82 @@ on:
 
 jobs:
   health-check:
-    name: Check Bot Health
+    name: Check Service Health
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check API Health
-        id: health
+      - name: Check Backend API Health
+        id: backend-health
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://throp.up.railway.app/health)
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://throp-bot-947985992378.us-central1.run.app/health)
           if [ $response -eq 200 ]; then
-            echo "✅ Bot is healthy"
-            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "✅ Backend is healthy"
+            echo "backend_status=healthy" >> $GITHUB_OUTPUT
           else
-            echo "❌ Bot is down! HTTP: $response"
-            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "❌ Backend is down! HTTP: $response"
+            echo "backend_status=unhealthy" >> $GITHUB_OUTPUT
             exit 1
           fi
       
-      - name: Check Twitter Activity
-        if: success()
-        env:
-          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+      - name: Check Frontend Health
+        id: frontend-health
         run: |
-          # Check if bot has been active in last 24 hours
-          curl -H "X-Admin-Key: $ADMIN_API_KEY" \
-               https://throp.up.railway.app/api/status | \
-               jq '.lastActivity'
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://throp.ai)
+          if [ $response -eq 200 ]; then
+            echo "✅ Frontend is healthy"
+            echo "frontend_status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Frontend is down! HTTP: $response"
+            echo "frontend_status=unhealthy" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Check API Functionality
+        if: success()
+        run: |
+          # Test chat endpoint
+          echo "Testing chat API..."
+          response=$(curl -s -X POST https://throp-bot-947985992378.us-central1.run.app/api/chat \
+            -H "Content-Type: application/json" \
+            -d '{"message": "health check test"}' \
+            -w "\n%{http_code}")
+          
+          http_code=$(echo "$response" | tail -n 1)
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Chat API is functional"
+          else
+            echo "⚠️ Chat API returned: $http_code"
+          fi
+          
+          # Test hot takes endpoint
+          echo "Testing hot takes..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://throp-bot-947985992378.us-central1.run.app/api/hot-takes)
+          if [ $response -eq 200 ]; then
+            echo "✅ Hot takes endpoint is functional"
+          else
+            echo "⚠️ Hot takes returned: $response"
+          fi
+      
+      - name: Check Twitter Bot Status
+        if: success()
+        continue-on-error: true
+        run: |
+          # Check if bot service is running
+          echo "Checking Twitter bot status..."
+          response=$(curl -s https://throp-bot-947985992378.us-central1.run.app/api/status | jq -r '.twitter.connected')
+          if [ "$response" = "true" ]; then
+            echo "✅ Twitter bot is connected"
+          else
+            echo "⚠️ Twitter bot might be disconnected"
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Health Check Summary"
+          echo "- Backend: ${{ steps.backend-health.outputs.backend_status || 'unknown' }}"
+          echo "- Frontend: ${{ steps.frontend-health.outputs.frontend_status || 'unknown' }}"
+          echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
       
       - name: Notify on Failure
         if: failure()
@@ -43,7 +93,7 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '🚨 Bot Health Check Failed',
-              body: `The scheduled health check failed at ${new Date().toISOString()}\n\nPlease check Railway logs.`,
-              labels: ['bug', 'urgent']
+              title: `🚨 Service Health Check Failed - ${new Date().toISOString()}`,
+              body: `The scheduled health check failed.\n\n**Services:**\n- Backend: ${{ steps.backend-health.outputs.backend_status || 'failed' }}\n- Frontend: ${{ steps.frontend-health.outputs.frontend_status || 'failed' }}\n\nPlease check:\n- [GCP Cloud Run Console](https://console.cloud.google.com/run)\n- [Netlify Dashboard](https://app.netlify.com)`,
+              labels: ['bug', 'monitoring']
             })

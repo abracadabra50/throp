@@ -25,33 +25,49 @@ export class TwitterApiError extends Error {
  */
 export class TwitterClient {
     client;
+    readClient; // Separate client for reading (uses Bearer Token if available)
     v2Client;
     config = getConfig();
     rateLimits = new Map();
     throttle;
     constructor() {
-        // Initialize Twitter client with OAuth2 Bearer Token if available
+        // Initialize Twitter client - we need BOTH OAuth methods:
+        // - OAuth 1.0a for WRITING (posting tweets, replies)
+        // - Bearer Token for READING (better rate limits for mentions)
         const bearerToken = this.config.twitter.bearerToken || process.env.TWITTER_BEARER_TOKEN;
         logger.info('Twitter client initialization:', {
             hasBearerToken: !!bearerToken,
+            hasOAuth1: !!(this.config.twitter.apiKey && this.config.twitter.accessToken),
             hasBotUserId: !!this.config.twitter.botUserId,
             botUserId: this.config.twitter.botUserId || 'NOT SET',
-            bearerTokenLength: bearerToken ? bearerToken.length : 0,
         });
-        if (bearerToken) {
-            // Use Bearer Token for better API access (OAuth 2.0)
-            this.client = new TwitterApi(bearerToken);
-            logger.info('Twitter client initialized with Bearer Token (OAuth 2.0)');
-        }
-        else {
-            // Fallback to OAuth 1.0a
+        // Initialize OAuth 1.0a client for POSTING (required for write operations)
+        if (this.config.twitter.apiKey && this.config.twitter.accessToken) {
             this.client = new TwitterApi({
                 appKey: this.config.twitter.apiKey,
                 appSecret: this.config.twitter.apiSecretKey,
                 accessToken: this.config.twitter.accessToken,
                 accessSecret: this.config.twitter.accessTokenSecret,
             });
-            logger.info('Twitter client initialized with OAuth 1.0a');
+            logger.info('✅ OAuth 1.0a client initialized for posting tweets');
+        }
+        else if (bearerToken) {
+            // Fallback to Bearer Token only (read-only mode)
+            this.client = new TwitterApi(bearerToken);
+            logger.warn('⚠️ Bearer Token ONLY mode - posting tweets will NOT work!');
+        }
+        else {
+            throw new Error('No Twitter authentication configured');
+        }
+        // Initialize Bearer Token client for READING if available (better rate limits)
+        if (bearerToken) {
+            this.readClient = new TwitterApi(bearerToken);
+            logger.info('✅ Bearer Token client initialized for reading mentions');
+        }
+        else {
+            // Fallback to OAuth 1.0a client for reading
+            this.readClient = this.client;
+            logger.info('Using OAuth 1.0a client for reading (lower rate limits)');
         }
         this.v2Client = this.client.v2;
         // Set up rate limiting based on API plan
@@ -87,7 +103,8 @@ export class TwitterClient {
         logger.info(`Fetching mentions for bot user ID: ${this.config.twitter.botUserId}`);
         try {
             const mentions = await this.executeWithRetry(async () => {
-                const response = await this.v2Client.userMentionTimeline(this.config.twitter.botUserId, {
+                // Use readClient (Bearer Token) for better rate limits when reading mentions
+                const response = await this.readClient.v2.userMentionTimeline(this.config.twitter.botUserId, {
                     since_id: sinceId,
                     max_results: Math.max(5, Math.min(maxResults, 100)), // Twitter API requires 5-100
                     'tweet.fields': [

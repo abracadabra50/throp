@@ -82,7 +82,7 @@ After adding the domain and configuring DNS:
 
 Once the domain is active, update your environment variable:
 
-```bash
+els like the ```bash
 netlify env:set NEXT_PUBLIC_BASE_URL "https://chat.throp.ai" --force
 ```
 
