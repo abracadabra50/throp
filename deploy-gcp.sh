@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_ID="your-gcp-project-id"
+PROJECT_ID="throp-469410"
 REGION="us-central1"
 SERVICE_NAME="throp-bot"
 

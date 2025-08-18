@@ -27,7 +27,7 @@ export default function HotTakes() {
     setError(null);
     
     try {
-      const response = await fetch('/api/hot-takes');
+      const response = await fetch('https://throp-bot-947985992378.us-central1.run.app/api/hot-takes');
       if (!response.ok) {
         throw new Error('Failed to fetch hot takes');
       }

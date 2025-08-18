@@ -20,6 +20,7 @@
     "react-dom": "19.1.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "styled-jsx": "^5.1.7",
     "twitter-api-v2": "^1.24.0",
     "zod": "^4.0.17"
   },

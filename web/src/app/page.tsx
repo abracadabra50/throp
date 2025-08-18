@@ -114,7 +114,7 @@ export default function Home() {
   // Fetch trending prompts from API
   const fetchTrendingPrompts = async () => {
     try {
-      const response = await fetch('/api/trending-prompts');
+      const response = await fetch('https://throp-bot-947985992378.us-central1.run.app/api/trending-prompts');
       const data = await response.json();
       if (data.prompts && Array.isArray(data.prompts)) {
         setTrendingPrompts(data.prompts);
@@ -272,8 +272,8 @@ export default function Home() {
       
       // Use proxy unless we have a specific backend URL (localhost for dev or run.app for direct)
       if (!apiUrl || (!apiUrl.includes('localhost') && !apiUrl.includes('run.app'))) {
-        console.log('Using proxy for production API');
-        apiUrl = '/api/proxy';
+        console.log('Using Netlify function proxy for production API');
+        apiUrl = '/.netlify/functions/chat-proxy';
       }
       
       console.log('Sending request to:', apiUrl);
