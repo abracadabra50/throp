@@ -154,7 +154,10 @@ export default function HotTakes() {
   if (isMobile) {
     return (
       <div className="hot-takes-ticker">
-        <div className="ticker-label">🔥</div>
+        <div className="ticker-label">
+          <span className="ticker-label-emoji">🔥</span>
+          <span className="ticker-label-text">hot takes</span>
+        </div>
         <div className="ticker-scroll">
           <div className="ticker-content">
             {[...takes, ...takes].map((take, index) => (
@@ -184,23 +187,36 @@ export default function HotTakes() {
 
           .ticker-label {
             position: absolute;
-            left: 12px;
+            left: 8px;
             z-index: 2;
-            font-size: 20px;
             background: #ffb088;
-            padding-right: 8px;
+            padding-right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+
+          .ticker-label-emoji {
+            font-size: 16px;
+          }
+
+          .ticker-label-text {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
           }
 
           .ticker-scroll {
             flex: 1;
             overflow: hidden;
-            padding-left: 40px;
+            padding-left: 90px;
           }
 
           .ticker-content {
             display: flex;
             white-space: nowrap;
-            animation: scroll 30s linear infinite;
+            animation: scroll 15s linear infinite;
           }
 
           @keyframes scroll {

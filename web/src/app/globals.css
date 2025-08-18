@@ -19,9 +19,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Comic Sans MS", "Comic Neue", cursive, sans-serif;
+  /* Playful but reliable font stack for all devices */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px; /* Base font size for better mobile readability */
+  line-height: 1.5;
   position: relative;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Handle throp logo background */
@@ -260,17 +265,20 @@ header img[src*="throp-actual"] {
   border-radius: 10px;
 }
 
-/* Random font switches */
+/* Random font switches - using web-safe fonts for better mobile support */
 .random-font-1 {
-  font-family: "Comic Sans MS", cursive !important;
+  font-family: Georgia, serif !important;
+  font-weight: 600;
 }
 
 .random-font-2 {
-  font-family: "Marker Felt", "Comic Neue", cursive !important;
+  font-family: "Trebuchet MS", "Lucida Sans", Arial, sans-serif !important;
+  font-weight: 500;
 }
 
 .random-font-3 {
-  font-family: "Chalkboard", "Comic Sans MS", cursive !important;
+  font-family: "Courier New", Courier, monospace !important;
+  font-weight: 600;
 }
 
 /* MS Paint style shadows */

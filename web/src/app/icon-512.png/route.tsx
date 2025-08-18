@@ -2,14 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const size = {
-  width: 32,
-  height: 32,
-};
-
-export const contentType = 'image/png';
-
-export default function Icon() {
+export async function GET() {
   return new ImageResponse(
     (
       <div
@@ -20,12 +13,12 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '6px',
+          borderRadius: '102px',
         }}
       >
         <svg 
           viewBox="0 0 200 200" 
-          style={{ width: 24, height: 24 }}
+          style={{ width: 400, height: 400 }}
         >
           {/* Throp logo - orange flower/star shape */}
           <path 
@@ -44,7 +37,8 @@ export default function Icon() {
       </div>
     ),
     {
-      ...size,
+      width: 512,
+      height: 512,
     }
   );
 }

@@ -137,6 +137,8 @@ export class ApiServer {
       'http://localhost:3000',
       'https://throp.vercel.app',
       'https://chat.throp.ai',
+      'https://throp.ai',
+      'https://www.throp.ai',
       process.env.FRONTEND_URL
     ].filter(Boolean);
     
@@ -733,7 +735,7 @@ export class ApiServer {
     }
     
     // Start server - this should always work
-    this.server.listen(this.port, () => {
+    this.server.listen(this.port, '0.0.0.0', () => {
       logger.success(`API server started on port ${this.port}`);
       logger.info(`WebSocket server available at ws://localhost:${this.port}`);
       logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);

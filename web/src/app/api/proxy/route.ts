@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 
-export const runtime = 'edge';
+// Remove edge runtime - causing issues on Netlify
+// export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,14 +14,18 @@ export async function POST(req: NextRequest) {
     
     console.log('Proxying message:', message);
     
-    // Forward the request to the external API with correct format
-    const response = await fetch('https://throp-gh-production.up.railway.app/api/chat', {
+    // Forward the request to the GCP backend with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    
+    const response = await fetch('https://throp-bot-947985992378.us-central1.run.app/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message }), // API expects { message: string }
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     // Check response status first
     if (!response.ok) {

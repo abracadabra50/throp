@@ -387,7 +387,8 @@ export default function Home() {
       color: white;
       padding: 10px 20px;
       border-radius: 10px;
-      font-family: Comic Sans MS;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 600;
       z-index: 9999;
       transform: rotate(-5deg);
     `;
@@ -401,19 +402,7 @@ export default function Home() {
     ));
   };
 
-  const shareChat = () => {
-    const chatText = messages
-      .map(m => `${m.role === 'user' ? 'You' : 'throp'}: ${m.content}`)
-      .join('\n\n');
-    
-    const blob = new Blob([chatText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `throp-chat-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   if (!showChat) {
     // Landing page - best in class but chaotic
@@ -456,10 +445,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-8 md:px-12">
           {/* Main heading */}
           <div className="mb-16 text-center">
-            <h1 className="text-6xl md:text-8xl font-bold mb-6" 
+            <h1 className="text-6xl md:text-8xl font-black mb-6" 
                 style={{ 
                   transform: `rotate(${randomOffsets.title * 0.2}deg)`,
-                  lineHeight: '0.9'
+                  lineHeight: '0.9',
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                  letterSpacing: '-0.02em'
                 }}>
               ask me<br/>
               <span className="text-orange-500">literally</span><br/>
@@ -540,7 +531,7 @@ export default function Home() {
           {/* Popular categories */}
           <div className="mb-12">
             <h2 className="text-sm font-semibold mb-4 text-gray-600 uppercase tracking-wide">popular rn</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            <div className="flex gap-2 md:gap-3 md:p-4 overflow-x-auto pb-2">
               {["crypto chaos", "tech drama", "hot takes", "market vibes", "gaming", "gen z decoder"].map(cat => (
                 <button
                   key={cat}
@@ -735,42 +726,31 @@ export default function Home() {
 
       {/* Header with controls */}
       <header className="flex-shrink-0 border-b-4 border-black z-10" style={{ background: '#ffb088' }}>
-        <div className="max-w-full px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-full px-3 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 md:gap-3">
             <Image 
               src="/throp-actual.svg" 
               alt="throp" 
-              width={50} 
-              height={50}
+              width={40} 
+              height={40}
               className="shaky"
               style={{ mixBlendMode: 'multiply' }}
             />
-            <h1 className="text-2xl md:text-3xl font-bold" style={{ transform: 'rotate(-1deg)' }}>
+            <h1 className="text-xl md:text-3xl font-bold" style={{ transform: 'rotate(-1deg)' }}>
               throp chat
             </h1>
           </div>
           
           {/* Controls */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-3">
             {/* About link */}
             <a
               href="/about"
-              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-sm md:text-base"
+              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-xs md:text-base"
               style={{ transform: 'rotate(1deg)' }}
             >
               about
             </a>
-
-            {/* Share button */}
-            <button
-              onClick={shareChat}
-              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-sm md:text-base"
-              style={{ transform: 'rotate(-1deg)' }}
-              title="Download chat"
-            >
-              <span className="hidden md:inline">💾 save</span>
-              <span className="md:hidden">💾</span>
-            </button>
 
             {/* Clear chat */}
             <button
@@ -780,7 +760,7 @@ export default function Home() {
                   localStorage.removeItem('throp-messages');
                 }
               }}
-              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-sm md:text-base"
+              className="px-2 md:px-3 py-1 border-2 border-black rounded-lg bg-white hover:bg-gray-100 text-xs md:text-base"
               style={{ transform: 'rotate(2deg)' }}
               title="Clear chat (Cmd/Ctrl + K)"
             >
@@ -811,7 +791,7 @@ export default function Home() {
         {/* Chat section */}
         <div className="flex-1 flex flex-col">
           {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="max-w-4xl mx-auto">
               {messages.length === 0 && (
                 <div className="text-center py-20">
@@ -917,7 +897,7 @@ export default function Home() {
 
                 {/* Typing Indicator */}
                 {isLoading && (
-                  <div className="flex gap-4">
+                  <div className="flex gap-2 md:gap-3 md:p-4">
                     <div className="flex-shrink-0 mt-2">
                       <Image 
                         src="/throp-actual.svg" 
@@ -944,7 +924,7 @@ export default function Home() {
 
           {/* Input Area */}
           <div className="flex-shrink-0 border-t-4 border-black bg-gradient-to-t from-[#fefdfb] via-[#fefdfb] to-transparent">
-            <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="max-w-4xl mx-auto px-3 md:px-6 py-4 md:py-6">
               {/* Command Suggestions */}
               {commandSuggestions.length > 0 && (
                 <div className="mb-2 bg-white border-4 border-black rounded-lg overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -971,7 +951,7 @@ export default function Home() {
                 </div>
               )}
               
-              <form onSubmit={handleSubmit} className="flex gap-4">
+              <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3 md:p-4">
                 <textarea
                   ref={inputRef}
                   value={input}

@@ -81,3 +81,4 @@ The fix is now deployed. Once Netlify builds complete (~2-3 minutes), the domain
 
 ## Summary
 This solution provides a clean separation between your landing page (throp.ai) and chat interface (chat.throp.ai) while maintaining a smooth user experience and developer-friendly local environment.
+

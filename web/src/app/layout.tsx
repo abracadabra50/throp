@@ -87,7 +87,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="throp" />
         <link rel="apple-touch-icon" href="/apple-icon" />
       </head>
-      <body style={{ fontFamily: '"Comic Sans MS", "Comic Neue", cursive, sans-serif' }}>
+      <body>
         {children}
       </body>
     </html>
