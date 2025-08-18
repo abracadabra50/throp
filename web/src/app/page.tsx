@@ -5,6 +5,7 @@ import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
+import { shouldAutoShowChat } from '@/utils/domain-detect';
 
 interface Message {
   id: string;
@@ -55,6 +56,11 @@ export default function Home() {
 
   // Load saved messages from localStorage and set random offsets
   useEffect(() => {
+    // Auto-show chat if on chat.throp.ai subdomain
+    if (shouldAutoShowChat()) {
+      setShowChat(true);
+    }
+    
     // Set random offsets on client side only to avoid hydration mismatch
     setRandomOffsets({
       title: Math.random() * 6 - 3,
