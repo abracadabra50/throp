@@ -108,7 +108,7 @@ export class TwitterClient {
           this.config.twitter.botUserId,
           {
             since_id: sinceId,
-            max_results: Math.min(maxResults, 100),
+            max_results: Math.max(5, Math.min(maxResults, 100)), // Twitter API requires 5-100
             'tweet.fields': [
               'author_id',
               'conversation_id',
