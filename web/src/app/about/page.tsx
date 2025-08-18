@@ -239,14 +239,14 @@ export default function About() {
               </div>
             </a>
             <a 
-              href="https://x.com/throp" 
+              href="https://x.com/throponsol" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-4 bg-white border-2 border-black rounded-xl hover:scale-105 transition-all"
             >
               <span className="text-2xl">🔥</span>
               <div>
-                <h3 className="font-bold">@throp</h3>
+                <h3 className="font-bold">@throponsol</h3>
                 <p className="text-sm text-gray-600">main account</p>
               </div>
             </a>
