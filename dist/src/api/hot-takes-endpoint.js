@@ -113,7 +113,6 @@ function getTimeSpecificTopics() {
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay();
-    const month = now.getMonth();
     const topics = [];
     // Time-based topics (changes every hour)
     if (hour >= 6 && hour < 9) {

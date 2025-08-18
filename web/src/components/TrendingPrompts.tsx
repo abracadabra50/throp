@@ -9,8 +9,8 @@ export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayPrompts, setDisplayPrompts] = useState<string[]>([]);
   
-  const PROMPTS_TO_SHOW = 3;
-  const ROTATION_INTERVAL = 5000; // Rotate every 5 seconds
+  const PROMPTS_TO_SHOW = 7;
+  const ROTATION_INTERVAL = 8000; // Rotate every 8 seconds
   
   // Auto-rotate prompts
   useEffect(() => {

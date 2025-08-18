@@ -14,6 +14,7 @@ import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
 import { createTweetRoutes } from './tweet-endpoints.js';
 import { RedisCache } from '../cache/redis.js';
 import { handleHotTakes } from './hot-takes-endpoint.js';
+import { handleTrendingPrompts } from './trending-prompts-endpoint.js';
 /**
  * Create and configure the API server
  */
@@ -184,6 +185,10 @@ export class ApiServer {
                 return;
             }
             await handleHotTakes(req, res);
+        });
+        // Trending prompts endpoint with hourly caching
+        this.app.get('/api/trending-prompts', async (req, res) => {
+            await handleTrendingPrompts(req, res);
         });
         // Chat endpoint - main API for web interface
         this.app.post('/api/chat', async (req, res) => {

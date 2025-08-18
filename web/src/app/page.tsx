@@ -316,8 +316,13 @@ export default function Home() {
               const content = line.slice(2).trim();
               console.log('Processing line content:', content);
               if (content && content !== '""') {
-                // Remove quotes and handle the content
-                const cleanContent = content.replace(/^"|"$/g, '');
+                // Remove quotes and unescape the content
+                let cleanContent = content.replace(/^"|"$/g, '');
+                // Unescape escaped characters
+                cleanContent = cleanContent
+                  .replace(/\\"/g, '"')  // Unescape quotes
+                  .replace(/\\n/g, '\n') // Unescape newlines
+                  .replace(/\\\\/g, '\\'); // Unescape backslashes
                 console.log('Clean content:', cleanContent);
                 // Don't append if it's just a number like "1" or "2"
                 if (cleanContent && !(/^\d+$/.test(cleanContent))) {
