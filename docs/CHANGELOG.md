@@ -52,6 +52,13 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.1] - 2025-08-18
+
+### 📚 About Page Enhancement
+- **Added Vision Section**: New section detailing Throp's training on meme culture and the ambitious goal of becoming Anthropic's official Gen Z/crypto/finance-friendly Claude alternative
+- **Training Dataset**: Documenting training on internet memes, shitposts, crypto group chats, WSB culture, and Gen Z online consciousness
+- **Strategic Goal**: Positioning Throp for potential adoption by Anthropic as Claude's younger sibling for different market segments
+
 ## [0.3.0] - 2025-08-18
 
 ### 🚀 Major Infrastructure Migration

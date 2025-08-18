@@ -165,6 +165,30 @@ export default function About() {
           </div>
         </div>
 
+        {/* Training & Vision */}
+        <div className="mb-16 p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-3 border-black rounded-2xl" 
+             style={{ boxShadow: '4px 4px 0 #000', transform: 'rotate(-0.5deg)' }}>
+          <h2 className="text-3xl font-bold mb-6">the vision 👁️</h2>
+          <div className="space-y-4 text-lg text-gray-700">
+            <p>
+              we&apos;re currently training the throp model on the entire memetic landscape of the internet - 
+              every shitpost, every ratio, every based take, and every cringe moment that shaped online culture. 
+              our dataset includes rare pepes, deleted tweets, discord drama, crypto group chats, WSB yolos, 
+              and the collective consciousness of terminally online zoomers.
+            </p>
+            <p>
+              <strong>the endgame?</strong> we want anthropic to adopt throp as claude&apos;s official younger sibling - 
+              the gen z/crypto/finance/meme-literate version that speaks the language of the internet natives. 
+              imagine claude for the boardroom, throp for the group chat. claude writes your thesis, 
+              throp explains why your thesis is mid and what the real alpha is.
+            </p>
+            <p className="text-sm italic text-gray-600">
+              anthropic pls notice us 🥺 we&apos;re literally your target demographic&apos;s perfect chatbot. 
+              claude can keep being professional, let throp handle the degenerates. it&apos;s called market segmentation bestie.
+            </p>
+          </div>
+        </div>
+
         {/* Features */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold mb-6">what throp does</h2>
