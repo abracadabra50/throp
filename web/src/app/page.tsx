@@ -5,7 +5,13 @@ import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
-import { shouldAutoShowChat } from '@/utils/domain-detect';
+import { 
+  shouldAutoShowChat, 
+  canNavigateBetweenPages, 
+  getChatUrl, 
+  getLandingUrl,
+  getDomainType 
+} from '@/utils/domain-detect';
 
 interface Message {
   id: string;
@@ -59,6 +65,15 @@ export default function Home() {
     // Auto-show chat if on chat.throp.ai subdomain
     if (shouldAutoShowChat()) {
       setShowChat(true);
+      
+      // Check for prompt in URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const prompt = urlParams.get('prompt');
+      if (prompt) {
+        setInput(decodeURIComponent(prompt));
+        // Clean up URL without reloading
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
     
     // Set random offsets on client side only to avoid hydration mismatch
@@ -667,7 +682,16 @@ export default function Home() {
           {/* Big CTA */}
           <div className="text-center mb-12">
             <button
-              onClick={() => setShowChat(true)}
+              onClick={() => {
+                const domainType = getDomainType();
+                if (domainType === 'landing') {
+                  // Redirect to chat.throp.ai
+                  window.location.href = 'https://chat.throp.ai';
+                } else {
+                  // Local environment - use state-based navigation
+                  setShowChat(true);
+                }
+              }}
               className="inline-flex items-center gap-3 text-2xl font-bold px-10 py-5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full border-3 border-black transition-all hover:scale-105"
               style={{ 
                 boxShadow: '6px 6px 0 #000',
@@ -764,13 +788,15 @@ export default function Home() {
               <span className="md:hidden">🗑️</span>
             </button>
 
-            <button
-              onClick={() => setShowChat(false)}
-              className="text-sm md:text-lg underline hover:no-underline px-2 md:px-4 py-1 md:py-2"
-              style={{ transform: 'rotate(2deg)' }}
-            >
-              go back
-            </button>
+            {canNavigateBetweenPages() && (
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-sm md:text-lg underline hover:no-underline px-2 md:px-4 py-1 md:py-2"
+                style={{ transform: 'rotate(2deg)' }}
+              >
+                go back
+              </button>
+            )}
           </div>
         </div>
       </header>
