@@ -26,7 +26,7 @@ function getCurrentContext() {
 
 // Generate trending prompts based on current events
 async function generateTrendingPrompts(): Promise<string[]> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'placeholder-for-build') {
     console.log('No Anthropic API key, using fallback prompts');
     return getFallbackPrompts();
   }
@@ -35,7 +35,7 @@ async function generateTrendingPrompts(): Promise<string[]> {
     const context = getCurrentContext();
     
     const anthropic = createAnthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
+      apiKey: process.env.ANTHROPIC_API_KEY,
     });
     
     const { text } = await generateText({

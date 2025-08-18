@@ -8,6 +8,11 @@ on:
 
 env:
   NODE_VERSION: '20'
+  # Add placeholder env vars for build
+  NEXT_PUBLIC_API_URL: 'http://localhost:3001/api/chat'
+  NEXT_PUBLIC_BASE_URL: 'https://throp.ai'
+  NEXT_PUBLIC_BACKEND_URL: 'https://throp-bot-947985992378.us-central1.run.app'
+  ANTHROPIC_API_KEY: 'placeholder-for-build'
 
 jobs:
   # Run tests and build only - deployment handled by deploy-gcp.yml
@@ -39,7 +44,12 @@ jobs:
           cd web
           npm ci
           npm run build
-        continue-on-error: true  # Frontend might have separate issues
+        env:
+          # Provide build-time env vars for Next.js
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_BASE_URL: ${{ env.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_BACKEND_URL: ${{ env.NEXT_PUBLIC_BACKEND_URL }}
+          ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY }}
       
       - name: Upload backend build artifacts
         uses: actions/upload-artifact@v3
