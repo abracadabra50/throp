@@ -473,6 +473,7 @@ export class ApiServer {
         let canWrite = false;
         let readError = null;
         let writeError = null;
+        let initializationDetails = null;
         
         if (this.twitterClient) {
           // Test read access (should work with Bearer Token)
@@ -481,10 +482,21 @@ export class ApiServer {
             canRead = true;
           } catch (error) {
             readError = (error as any).message || 'Read test failed';
+            // If it's a bot user ID error, that's different from auth error
+            if (error?.message?.includes('Bot user ID')) {
+              readError = 'Bot user ID not configured';
+            }
           }
           
-          // We can't actually test write without posting, but we can check if OAuth 1.0a is configured
-          canWrite = hasApiKey && hasAccessToken;
+          // Check if OAuth 1.0a is properly configured for writing
+          canWrite = hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret;
+          
+          // Get initialization details
+          initializationDetails = {
+            hasOAuth1Client: hasApiKey && hasAccessToken,
+            hasBearerClient: hasBearerToken,
+            clientMode: (hasApiKey && hasAccessToken) ? 'OAuth 1.0a' : hasBearerToken ? 'Bearer Token Only' : 'None',
+          };
         }
         
         res.json({
@@ -496,24 +508,81 @@ export class ApiServer {
             hasAccessSecret,
             apiKeyLength: config.twitter?.apiKey?.length || 0,
             accessTokenLength: config.twitter?.accessToken?.length || 0,
+            configured: hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret,
           },
           oauth2: {
             hasBearerToken,
             hasBotUserId,
             bearerTokenLength: config.twitter?.bearerToken?.length || 0,
             botUserId: config.twitter?.botUserId,
+            configured: hasBearerToken && hasBotUserId,
           },
           capabilities: {
             canRead,
             canWrite,
             clientInitialized: !!this.twitterClient,
           },
+          initialization: initializationDetails,
           errors: {
             readError,
             writeError,
           },
         });
       } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: (error as Error).message,
+        });
+      }
+    });
+    
+    // Twitter test tweet endpoint (for debugging OAuth 1.0a)
+    this.app.post('/api/twitter/test-tweet', async (req: Request, res: Response) => {
+      try {
+        if (!this.twitterClient) {
+          return res.status(500).json({
+            success: false,
+            error: 'Twitter client not initialized',
+          });
+        }
+        
+        const { testMode = true } = req.body;
+        
+        if (testMode) {
+          // Just check if we COULD tweet
+          const config = getConfig();
+          const canTweet = !!(
+            config.twitter?.apiKey &&
+            config.twitter?.apiSecretKey &&
+            config.twitter?.accessToken &&
+            config.twitter?.accessTokenSecret
+          );
+          
+          return res.json({
+            success: true,
+            testMode: true,
+            canTweet,
+            message: canTweet ? 
+              'OAuth 1.0a is configured, bot should be able to tweet' : 
+              'OAuth 1.0a not fully configured, cannot tweet',
+          });
+        }
+        
+        // Actually post a test tweet (only if explicitly requested)
+        const timestamp = Date.now();
+        const tweet = await this.twitterClient.tweet(
+          `Test tweet from Throp bot - ${timestamp}`,
+          { thread: false }
+        );
+        
+        res.json({
+          success: true,
+          testMode: false,
+          tweetId: tweet.id,
+          message: 'Test tweet posted successfully!',
+        });
+      } catch (error) {
+        logger.error('Test tweet failed', error);
         res.status(500).json({
           success: false,
           error: (error as Error).message,

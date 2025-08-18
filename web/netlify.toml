@@ -1,0 +1,68 @@
+# Netlify Configuration for Throp Web App
+
+[build]
+  # Build command for Next.js
+  command = "npm run build"
+  
+  # Directory to deploy (Next.js output)
+  publish = ".next"
+  
+  # Node version for builds
+  environment = { NODE_VERSION = "20" }
+
+[build.environment]
+  # Next.js optimizations for Netlify
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Netlify Functions (if you need serverless functions)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/throp-actual.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# API routes
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0"
+
+# Redirects for Next.js
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Next.js specific plugin
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables (these will be set in Netlify UI)
+[context.production.environment]
+  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
+  NEXT_PUBLIC_BASE_URL = "https://throp.netlify.app"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
+  NEXT_PUBLIC_BASE_URL = "https://deploy-preview--throp.netlify.app"
+
+[context.branch-deploy.environment]
+  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
