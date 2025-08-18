@@ -477,7 +477,7 @@ export class ApiServer {
         if (this.twitterClient) {
           // Test read access (should work with Bearer Token)
           try {
-            const mentions = await this.twitterClient.getMentions(undefined, 5);
+            await this.twitterClient.getMentions(undefined, 5);
             canRead = true;
           } catch (error) {
             readError = (error as any).message || 'Read test failed';
