@@ -1,6 +1,12 @@
 # Changelog
 
-## [2025-01-14] - CI/CD Overhaul & Frontend API Fix
+## [2025-01-14] - CI/CD Overhaul & Twitter Bot Fix
+
+### Critical Twitter Bot Fix 🚨
+- **Twitter Mentions**: Switched from `userMentionTimeline` to `search` API to fix 401 errors
+- **Bot User ID**: Added Twitter Bot User ID (1956873492420608000) to Cloud Run
+- **Credentials**: Updated all Twitter API credentials (keys, tokens, secrets)
+- **Authentication**: Now using search API with Bearer Token for reading, OAuth 1.0a for posting
 
 ### Hotfix 🚨
 - **Frontend Chat Responses**: Fixed ES module error by adding `export const runtime = 'nodejs'` to all API routes
