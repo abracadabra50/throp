@@ -191,7 +191,7 @@ export default function Docs() {
 
             <p>
               our training process includes specialized datasets for understanding internet culture evolution - 
-              from rage comics to wojaks, from "epic win" to "fr fr no cap", from hodl to diamond hands. 
+              from rage comics to wojaks, from &quot;epic win&quot; to &quot;fr fr no cap&quot;, from hodl to diamond hands. 
               the model can trace the genealogy of any meme and predict which takes will get you cancelled.
             </p>
 
