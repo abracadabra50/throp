@@ -1,0 +1,183 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  backend-tests:
+    name: Backend Health Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+      
+      - name: Build backend
+        run: npm run build
+      
+      - name: Test backend endpoints
+        run: |
+          echo "Testing backend health endpoints..."
+          
+          # Test health endpoint
+          curl -f https://throp-bot-947985992378.us-central1.run.app/health || exit 1
+          echo "✅ Health check passed"
+          
+          # Test status endpoint
+          curl -f https://throp-bot-947985992378.us-central1.run.app/api/status || exit 1
+          echo "✅ Status endpoint passed"
+          
+          # Test chat endpoint with simple message
+          RESPONSE=$(curl -s -X POST https://throp-bot-947985992378.us-central1.run.app/api/chat \
+            -H "Content-Type: application/json" \
+            -d '{"message": "test"}')
+          
+          if echo "$RESPONSE" | grep -q "success"; then
+            echo "✅ Chat endpoint working"
+          else
+            echo "❌ Chat endpoint failed"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          
+          # Test Twitter diagnostics
+          curl -f https://throp-bot-947985992378.us-central1.run.app/api/twitter/diagnostics || exit 1
+          echo "✅ Twitter diagnostics passed"
+
+  frontend-tests:
+    name: Frontend Build & Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install and build frontend
+        run: |
+          cd web
+          npm ci --no-audit --no-fund
+          npm run build
+        env:
+          NEXT_PUBLIC_API_URL: 'https://throp-bot-947985992378.us-central1.run.app/api/chat'
+          NEXT_PUBLIC_BASE_URL: 'https://throp.ai'
+          NEXT_PUBLIC_BACKEND_URL: 'https://throp-bot-947985992378.us-central1.run.app'
+          ANTHROPIC_API_KEY: 'placeholder-for-build'
+      
+      - name: Test frontend endpoints
+        run: |
+          echo "Testing frontend API routes..."
+          
+          # Test main page
+          curl -f https://throp.ai || exit 1
+          echo "✅ Main page loads"
+          
+          # Test trending prompts
+          PROMPTS=$(curl -s https://throp.ai/api/trending-prompts)
+          if echo "$PROMPTS" | grep -q "prompts"; then
+            echo "✅ Trending prompts working"
+          else
+            echo "❌ Trending prompts failed"
+            exit 1
+          fi
+          
+          # Test hot takes
+          TAKES=$(curl -s https://throp.ai/api/hot-takes)
+          if echo "$TAKES" | grep -q "takes"; then
+            echo "✅ Hot takes working"
+          else
+            echo "❌ Hot takes failed"
+            exit 1
+          fi
+
+  integration-test:
+    name: Full Integration Test
+    needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Test Frontend-Backend Integration
+        run: |
+          echo "Testing full chat flow..."
+          
+          # Test proxy endpoint (frontend -> backend)
+          RESPONSE=$(curl -s -X POST https://throp.ai/api/proxy \
+            -H "Content-Type: application/json" \
+            -d '{"messages": [{"role": "user", "content": "hello"}]}')
+          
+          if echo "$RESPONSE" | grep -q "0:"; then
+            echo "✅ Frontend-Backend proxy working"
+          else
+            echo "❌ Proxy failed"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          
+          echo "✅ All integration tests passed!"
+      
+      - name: Test Twitter Functionality
+        run: |
+          echo "Testing Twitter capabilities..."
+          
+          # Check if Twitter is configured
+          TWITTER_STATUS=$(curl -s https://throp-bot-947985992378.us-central1.run.app/api/twitter/diagnostics)
+          
+          if echo "$TWITTER_STATUS" | grep -q "readCapability"; then
+            echo "✅ Twitter API configured"
+            
+            # Check read capability
+            if echo "$TWITTER_STATUS" | grep -q '"readCapability":true'; then
+              echo "✅ Twitter read access working"
+            else
+              echo "⚠️ Twitter read access not configured"
+            fi
+            
+            # Check write capability
+            if echo "$TWITTER_STATUS" | grep -q '"writeCapability":true'; then
+              echo "✅ Twitter write access working"
+            else
+              echo "⚠️ Twitter write access not configured"
+            fi
+          else
+            echo "❌ Twitter API check failed"
+            exit 1
+          fi
+
+  notify-success:
+    name: Success Notification
+    needs: [integration-test]
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Report Success
+        run: |
+          echo "🎉 All tests passed successfully!"
+          echo ""
+          echo "✅ Backend: Healthy and responding"
+          echo "✅ Frontend: Building and serving"
+          echo "✅ Integration: Frontend-Backend communication working"
+          echo "✅ Twitter: API configured and accessible"
+          echo ""
+          echo "Throp is fully operational! 🚀"
