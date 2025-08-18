@@ -465,10 +465,7 @@ export default function Home() {
           <div className="mb-12">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                trending prompts rn 
-                <span className="text-xs normal-case ml-2 text-gray-400">
-                  (live from the timeline)
-                </span>
+                trending prompts rn
               </h2>
               <button
                 onClick={fetchTrendingPrompts}
