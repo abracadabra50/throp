@@ -131,6 +131,14 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.6] - 2025-08-18
+
+### 🎯 Social Preview Simplification  
+- **Direct Static Image**: Now using hi-throp.png directly in metadata
+- **Removed Dynamic Routes**: Deleted opengraph-image.tsx and twitter-image.tsx
+- **Cleaner Implementation**: No more ImageResponse components, just static file
+- **Better Performance**: Direct image serving instead of runtime generation
+
 ## [0.3.5] - 2025-08-18
 
 ### 🖼️ Social Preview Image Fix
