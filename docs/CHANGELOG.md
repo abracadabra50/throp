@@ -101,11 +101,15 @@ All notable changes to Throp will be documented in this file.
 ### 📖 Documentation Page
 - **New Docs Page**: Created comprehensive documentation at /docs
 - **API Reference**: Listed upcoming API endpoints (chat, hot-takes, roast, translate) with coming soon status
+- **Launch Date**: API launching Q4 2025
 - **Throp Foundation**: Detailed section about grants program in $throp tokens for builders
-- **Grant Tiers**: Micro (10k), Builder (100k), Chaos (1M), and Special (unlimited) $throp grants
-- **SDKs & Libraries**: Planned support for JavaScript, Python, Rust, and Go
-- **Rate Limits**: Free (100/day), Based (10k/day), and Degen (unlimited) tiers
-- **Code Examples**: Quick start guide with sample API usage
+- **Grant Types**: Micro, Builder, Chaos, and Special grants (amounts TBD)
+- **SDKs & Libraries**: JavaScript (@throp/sdk) and Python (throp) libraries coming soon
+- **Model Training Section**: Added comprehensive details about training the Throp model:
+  - 10TB+ training data (memes, discord, tweets, telegram, WSB, tiktok)
+  - 420B parameter transformer architecture with chaos attention
+  - RLCF (Reinforcement Learning from Chaotic Feedback) technique
+  - Internet culture evolution understanding
 
 ### 🔗 Navigation Improvements
 - **Clickable Logo**: Throp logo in header now links to homepage on both landing page and chat interface
