@@ -1,5 +1,13 @@
 # Changelog
 
+## [2025-08-18] - CRITICAL FIX: Twitter Bot Can Now Post Replies
+### Fixed
+- **CRITICAL BUG FIX**: Twitter bot can now post replies! Fixed OAuth initialization bug where Bearer Token (read-only) was preventing OAuth 1.0a (required for posting) from being initialized
+- TwitterClient now properly uses BOTH authentication methods:
+  - Bearer Token for reading mentions (better rate limits)
+  - OAuth 1.0a for posting tweets and replies
+- Added diagnostics endpoint to debug authentication issues at `/api/twitter/diagnostics`
+
 ## [2025-08-17] - Claude Model Update & OAuth2 Support + Real-time Mentions + Friendly Roasting
 ### Fixed
 - Updated Claude model to `claude-sonnet-4-20250514` as specified

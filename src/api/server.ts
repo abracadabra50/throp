@@ -471,17 +471,20 @@ export class ApiServer {
         // Test if we can make a simple API call
         let canRead = false;
         let canWrite = false;
-        let errorDetails = null;
+        let readError = null;
+        let writeError = null;
         
         if (this.twitterClient) {
+          // Test read access (should work with Bearer Token)
           try {
-            // Test read access with v2 API (using bearer token)
-            const v2Client = this.twitterClient.getV2Client();
-            const user = await v2Client.me();
-            canRead = !!user.data;
+            const mentions = await this.twitterClient.getMentions(undefined, 5);
+            canRead = true;
           } catch (error) {
-            errorDetails = (error as any).message || 'Read test failed';
+            readError = (error as any).message || 'Read test failed';
           }
+          
+          // We can't actually test write without posting, but we can check if OAuth 1.0a is configured
+          canWrite = hasApiKey && hasAccessToken;
         }
         
         res.json({
@@ -505,7 +508,10 @@ export class ApiServer {
             canWrite,
             clientInitialized: !!this.twitterClient,
           },
-          errorDetails,
+          errors: {
+            readError,
+            writeError,
+          },
         });
       } catch (error) {
         res.status(500).json({
