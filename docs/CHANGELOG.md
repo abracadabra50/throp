@@ -1,5 +1,26 @@
 # Changelog
 
+## [2025-01-14] - CI/CD Overhaul & Frontend API Fix
+
+### Fixed 🔧
+- **CI/CD Pipeline**: Fixed GitHub Actions failures by removing problematic npm cache and regenerating package-lock.json
+- **Netlify 502 Errors**: Resolved all frontend API route failures (hot-takes, trending-prompts, proxy) by adding ANTHROPIC_MODEL to Cloud Run
+- **Hot Takes Endpoint**: Backend hot-takes now working correctly with proper model configuration (`claude-sonnet-4-20250514`)
+- **Integration Tests**: Created comprehensive test suite with `integration-tests.yml` workflow
+- **E2E Testing**: Added `test-e2e.sh` script for full system validation
+
+### Added ✨
+- **ANTHROPIC_MODEL Environment Variable**: Added to Cloud Run configuration
+- **GitHub Actions Improvements**: Simplified CI workflow with better error handling and no caching issues
+- **Comprehensive Testing**: Automated tests for backend health, frontend routes, and full integration
+
+### Verified ✅
+- All backend endpoints: 200 OK (health, status, chat, hot-takes, twitter diagnostics)
+- All frontend endpoints: 200 OK (homepage, hot-takes API, trending prompts, proxy)
+- Hot takes generation: Working with fresh, relevant content
+- Trending prompts: Successfully generating contextual prompts
+- Frontend-Backend integration: Fully operational
+
 ## [2025-08-18] - CRITICAL FIX: Twitter Bot Can Now Post Replies
 ### Fixed
 - **CRITICAL BUG FIX**: Twitter bot can now post replies! Fixed OAuth initialization bug where Bearer Token (read-only) was preventing OAuth 1.0a (required for posting) from being initialized
