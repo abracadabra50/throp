@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 
-// Use Node.js runtime for Netlify compatibility
-export const runtime = 'nodejs';
+// Don't specify runtime - let Netlify use default Node.js runtime
 
 // Get current date/time for context
 function getCurrentContext() {

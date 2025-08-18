@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Use Node.js runtime for Netlify compatibility
-export const runtime = 'nodejs';
+// Don't specify runtime - let Netlify use default Node.js runtime
 
 /**
  * Hot Takes API Route

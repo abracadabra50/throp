@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Use Node.js runtime for Netlify compatibility
-export const runtime = 'nodejs';
+// Don't specify runtime - let Netlify use default Node.js runtime
+// export const runtime = 'edge'; // This causes issues on Netlify
 
 export async function POST(req: NextRequest) {
   try {
