@@ -13,6 +13,7 @@ env:
   NEXT_PUBLIC_BASE_URL: 'https://throp.ai'
   NEXT_PUBLIC_BACKEND_URL: 'https://throp-bot-947985992378.us-central1.run.app'
   ANTHROPIC_API_KEY: 'placeholder-for-build'
+  ANTHROPIC_MODEL: 'claude-3-sonnet-20240229'
 
 jobs:
   # Run tests and build only - deployment handled by deploy-gcp.yml
@@ -27,7 +28,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
       
       - name: Install backend dependencies
         run: npm ci
