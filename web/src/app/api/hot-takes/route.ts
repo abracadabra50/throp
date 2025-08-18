@@ -32,7 +32,7 @@ Return ONLY a JSON array like this, no other text:
       });
       
       const { text } = await generateText({
-        model: anthropicClient(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
+        model: anthropicClient(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'),
         prompt,
         temperature: 0.7,
       });
@@ -168,7 +168,7 @@ Keep it under 20 words. Be accurate but unhinged. Natural gen z voice, not force
 Just the take, nothing else:`;
       
       const { text } = await generateText({
-        model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022'),
+        model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'),
         prompt,
         temperature: 0.95,
 

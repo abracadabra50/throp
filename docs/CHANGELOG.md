@@ -69,6 +69,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More accurate information about trending topics and viral content
 - Seamless integration with existing Perplexity + Claude pipeline
 
+## [0.4.8] - 2025-08-17
+
+### Added - Netlify Deployment Support
+- **Netlify Configuration**: Complete migration from Vercel to Netlify
+  - Added `netlify.toml` configuration file
+  - Full deployment documentation in `NETLIFY_DEPLOYMENT.md`
+  - Environment variables guide in `NETLIFY_ENV_VARS.md`
+  - Support for Netlify Functions and Edge Functions
+- **Simplified Deployment**: Only 3 required environment variables
+  - ANTHROPIC_API_KEY
+  - ANTHROPIC_MODEL
+  - NEXT_PUBLIC_API_URL
+- **Build Optimisations**: Configured for Next.js on Netlify
+  - Automatic ISR support
+  - API routes → Netlify Functions conversion
+  - Global CDN distribution
+
 ## [0.4.7] - 2025-08-17
 
 ### Enhanced - Dynamic Trending Prompts

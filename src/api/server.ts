@@ -481,9 +481,10 @@ export class ApiServer {
             await this.twitterClient.getMentions(undefined, 5);
             canRead = true;
           } catch (error) {
-            readError = (error as any).message || 'Read test failed';
+            const errorMessage = (error as any).message || 'Read test failed';
+            readError = errorMessage;
             // If it's a bot user ID error, that's different from auth error
-            if (error?.message?.includes('Bot user ID')) {
+            if (errorMessage.includes('Bot user ID')) {
               readError = 'Bot user ID not configured';
             }
           }
@@ -540,10 +541,11 @@ export class ApiServer {
     this.app.post('/api/twitter/test-tweet', async (req: Request, res: Response) => {
       try {
         if (!this.twitterClient) {
-          return res.status(500).json({
+          res.status(500).json({
             success: false,
             error: 'Twitter client not initialized',
           });
+          return;
         }
         
         const { testMode = true } = req.body;
@@ -558,7 +560,7 @@ export class ApiServer {
             config.twitter?.accessTokenSecret
           );
           
-          return res.json({
+          res.json({
             success: true,
             testMode: true,
             canTweet,
@@ -566,13 +568,13 @@ export class ApiServer {
               'OAuth 1.0a is configured, bot should be able to tweet' : 
               'OAuth 1.0a not fully configured, cannot tweet',
           });
+          return;
         }
         
         // Actually post a test tweet (only if explicitly requested)
         const timestamp = Date.now();
         const tweet = await this.twitterClient.tweet(
-          `Test tweet from Throp bot - ${timestamp}`,
-          { thread: false }
+          `Test tweet from Throp bot - ${timestamp}`
         );
         
         res.json({

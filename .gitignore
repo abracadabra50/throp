@@ -85,3 +85,5 @@ web/build/
 
 # Railway
 .railway/
+# Local Netlify folder
+.netlify

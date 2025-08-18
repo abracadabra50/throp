@@ -4,15 +4,11 @@
   # Build command for Next.js
   command = "npm run build"
   
-  # Directory to deploy (Next.js output)
+  # Directory to deploy (Next.js output - Netlify plugin handles this)
   publish = ".next"
   
   # Node version for builds
-  environment = { NODE_VERSION = "20" }
-
-[build.environment]
-  # Next.js optimizations for Netlify
-  NEXT_TELEMETRY_DISABLED = "1"
+  environment = { NODE_VERSION = "20", NEXT_TELEMETRY_DISABLED = "1" }
 
 # Netlify Functions (if you need serverless functions)
 [functions]
@@ -57,12 +53,12 @@
 
 # Environment variables (these will be set in Netlify UI)
 [context.production.environment]
-  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
   NEXT_PUBLIC_BASE_URL = "https://throp.netlify.app"
 
 [context.deploy-preview.environment]
-  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
   NEXT_PUBLIC_BASE_URL = "https://deploy-preview--throp.netlify.app"
 
 [context.branch-deploy.environment]
-  NEXT_PUBLIC_API_URL = "https://throp-api.railway.app/api/chat"
+  NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"

@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
-import { Anthropic } from '@ai-sdk/anthropic';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
 
 // Get current date/time for context
 function getCurrentContext() {
@@ -38,8 +34,12 @@ async function generateTrendingPrompts(): Promise<string[]> {
   try {
     const context = getCurrentContext();
     
+    const anthropic = createAnthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
+    });
+    
     const { text } = await generateText({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'),
       prompt: `You are helping generate trending conversation prompts for throp (a chaotic Gen Z AI).
       
 Current date: ${context.date} (${context.season} 2025)
@@ -58,7 +58,6 @@ Example format: ["prompt 1", "prompt 2", "prompt 3"]
 
 Make them feel current and relevant to ${context.month} ${context.year}.`,
       temperature: 0.9,
-      maxTokens: 300,
     });
 
     try {
