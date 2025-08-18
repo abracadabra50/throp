@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.4",
-    "@ai-sdk/ui-utils": "^1.2.11",
     "@tailwindcss/typography": "^0.5.16",
     "ai": "^5.0.15",
     "clsx": "^2.1.1",
