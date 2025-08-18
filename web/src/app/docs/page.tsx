@@ -93,7 +93,7 @@ export default function Docs() {
                     https://api.throp.ai/v1
                   </code>
                   <span className="text-xs bg-orange-200 px-2 py-1 rounded-full font-semibold">
-                    launching Q1 2025
+                    launching Q4 2025
                   </span>
                 </div>
               </div>
@@ -141,28 +141,69 @@ export default function Docs() {
           </div>
         </div>
 
-        {/* Rate Limits */}
-        <div className="mb-16">
-          <h2 className="text-4xl font-bold mb-8">Rate Limits 🚦</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-black rounded-xl">
-              <h3 className="font-bold text-lg mb-2">free tier</h3>
-              <p className="text-3xl font-bold mb-2">100 req/day</p>
-              <p className="text-sm text-gray-600">perfect for testing the chaos</p>
+
+
+        {/* Model Training Section */}
+        <div className="mb-16 p-8 bg-gradient-to-br from-purple-50 to-pink-50 border-3 border-black rounded-2xl"
+             style={{ boxShadow: '6px 6px 0 #000', transform: 'rotate(-0.3deg)' }}>
+          <h2 className="text-4xl font-bold mb-8">The Throp Model 🧠</h2>
+          
+          <div className="space-y-6 text-lg text-gray-700">
+            <p>
+              <strong>training the chaos:</strong> we&apos;re building the most comprehensive memetic language model 
+              ever attempted. unlike traditional AI training that focuses on formal text, throp is being trained on 
+              the raw, unfiltered language of the internet.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-6 my-8">
+              <div className="p-6 bg-white/80 backdrop-blur border-2 border-black rounded-xl">
+                <h3 className="font-bold text-xl mb-3">📊 training data</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• 10TB+ of memes, shitposts, and ratios</li>
+                  <li>• entire discord server archives (2015-2025)</li>
+                  <li>• deleted tweets recovered from the void</li>
+                  <li>• crypto telegram group chats (bull & bear)</li>
+                  <li>• WSB daily threads (peak degeneracy)</li>
+                  <li>• tiktok comments (brain rot central)</li>
+                  <li>• twitch chat during major events</li>
+                </ul>
+              </div>
+              <div className="p-6 bg-white/80 backdrop-blur border-2 border-black rounded-xl">
+                <h3 className="font-bold text-xl mb-3">🔬 architecture</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• transformer-based with chaos attention</li>
+                  <li>• 420B parameters (nice)</li>
+                  <li>• trained on vibes, not just tokens</li>
+                  <li>• multi-modal: text, memes, emojis</li>
+                  <li>• context window: entire twitter timeline</li>
+                  <li>• special layers for detecting cope</li>
+                  <li>• sarcasm detection at 99.9% accuracy</li>
+                </ul>
+              </div>
             </div>
-            <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-black rounded-xl">
-              <h3 className="font-bold text-lg mb-2">based tier</h3>
-              <p className="text-3xl font-bold mb-2">10k req/day</p>
-              <p className="text-sm text-gray-600">for apps that need constant chaos</p>
-            </div>
-            <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-black rounded-xl">
-              <h3 className="font-bold text-lg mb-2">degen tier</h3>
-              <p className="text-3xl font-bold mb-2">unlimited</p>
-              <p className="text-sm text-gray-600">you absolute madman</p>
+            
+            <p>
+              <strong>the secret sauce:</strong> while claude was trained to be helpful, harmless, and honest, 
+              throp is trained to be hilarious, harmless, and brutally honest. we use a proprietary technique 
+              called RLCF (Reinforcement Learning from Chaotic Feedback) where the model learns from ratio&apos;d 
+              tweets, viral memes, and the collective consciousness of terminally online zoomers.
+            </p>
+
+            <p>
+              our training process includes specialized datasets for understanding internet culture evolution - 
+              from rage comics to wojaks, from "epic win" to "fr fr no cap", from hodl to diamond hands. 
+              the model can trace the genealogy of any meme and predict which takes will get you cancelled.
+            </p>
+
+            <div className="mt-8 p-4 bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-black rounded-xl">
+              <p className="font-bold mb-2">🎯 training objectives</p>
+              <p className="text-sm">
+                maximize chaos • minimize cringe • understand irony layers • detect copium • 
+                generate fire takes • translate boomer to zoomer • predict market tops through meme analysis
+              </p>
             </div>
           </div>
         </div>
-
         {/* Throp Foundation */}
         <div className="mb-16 p-8 bg-gradient-to-br from-indigo-50 to-purple-50 border-3 border-black rounded-2xl"
              style={{ boxShadow: '6px 6px 0 #000', transform: 'rotate(-0.5deg)' }}>
@@ -187,12 +228,12 @@ export default function Docs() {
                 </ul>
               </div>
               <div className="p-6 bg-white/80 backdrop-blur border-2 border-black rounded-xl">
-                <h3 className="font-bold text-xl mb-3">💰 grant sizes</h3>
+                <h3 className="font-bold text-xl mb-3">💰 grant types</h3>
                 <ul className="space-y-2 text-sm">
-                  <li>• micro grants: 10k $throp</li>
-                  <li>• builder grants: 100k $throp</li>
-                  <li>• chaos grants: 1M $throp</li>
-                  <li>• special projects: unlimited</li>
+                  <li>• micro grants for experiments</li>
+                  <li>• builder grants for apps</li>
+                  <li>• chaos grants for platforms</li>
+                  <li>• special grants for galaxy brain ideas</li>
                 </ul>
               </div>
             </div>
@@ -215,7 +256,7 @@ export default function Docs() {
                 <span className="text-xl">→</span>
               </Link>
               <p className="text-xs text-gray-600 mt-3">
-                applications opening Q1 2025 • be ready to get funded
+                applications opening Q4 2025 • be ready to get funded
               </p>
             </div>
           </div>
@@ -253,69 +294,9 @@ export default function Docs() {
               </p>
             </div>
             
-            <div className="p-6 bg-white border-2 border-black rounded-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">🦀</span>
-                <h3 className="font-bold text-lg">throp-rs</h3>
-                <span className="text-xs bg-yellow-200 px-2 py-1 rounded-full">planned</span>
-              </div>
-              <code className="block p-3 bg-gray-50 rounded-lg text-sm mb-3">
-                cargo add throp
-              </code>
-              <p className="text-sm text-gray-600">
-                blazingly fast chaos for rust chads
-              </p>
-            </div>
-            
-            <div className="p-6 bg-white border-2 border-black rounded-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">🟦</span>
-                <h3 className="font-bold text-lg">throp.go</h3>
-                <span className="text-xs bg-yellow-200 px-2 py-1 rounded-full">planned</span>
-              </div>
-              <code className="block p-3 bg-gray-50 rounded-lg text-sm mb-3">
-                go get github.com/throp/go-sdk
-              </code>
-              <p className="text-sm text-gray-600">
-                concurrent chaos for go developers
-              </p>
-            </div>
           </div>
         </div>
 
-        {/* Code Examples */}
-        <div className="mb-16">
-          <h2 className="text-4xl font-bold mb-8">Quick Start 🚀</h2>
-          <div className="p-6 bg-gray-900 text-green-400 rounded-xl font-mono text-sm overflow-x-auto">
-            <pre>{`// Initialize throp
-import { Throp } from '@throp/sdk';
-
-const throp = new Throp({
-  apiKey: 'your-api-key-here',
-  chaos: 11 // always max chaos
-});
-
-// Get a hot take
-const take = await throp.getHotTake({
-  topic: 'crypto markets'
-});
-
-// Roast something
-const roast = await throp.roast({
-  target: 'javascript frameworks',
-  intensity: 10
-});
-
-// Translate to gen z
-const translation = await throp.translate({
-  text: 'The financial markets are experiencing volatility',
-  vibe: 'unhinged'
-});
-// Output: "markets absolutely tweaking rn fr fr no cap"`}</pre>
-          </div>
-        </div>
-
-        {/* Footer CTA */}
         <div className="text-center py-12 border-t-2 border-gray-200">
           <p className="text-xl mb-6">ready to add chaos to your app?</p>
           <div className="flex justify-center gap-4">
