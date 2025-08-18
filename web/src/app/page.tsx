@@ -699,6 +699,14 @@ export default function Home() {
               powered by <span className="font-bold">$throp</span>
             </p>
           </div>
+          
+          {/* Footer Navigation */}
+          <div className="flex justify-center gap-6 mt-12 pt-8 border-t border-gray-200 text-sm">
+            <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+            <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+            <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+            <a href="https://x.com/throponsol" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">twitter</a>
+          </div>
         </div>
       </div>
     );

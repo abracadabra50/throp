@@ -302,6 +302,15 @@ export default function About() {
             talk to throp
             <span className="text-2xl">→</span>
           </Link>
+          
+          {/* Footer Navigation */}
+          <div className="flex justify-center gap-6 mt-8 text-sm">
+            <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+            <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+            <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+            <a href="https://x.com/throponsol" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">twitter</a>
+          </div>
+          
           <p className="text-xs text-gray-500 mt-4">
             disclaimer: throp is not financial advice, life advice, or any kind of advice really
           </p>
