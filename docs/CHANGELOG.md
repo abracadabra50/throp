@@ -131,6 +131,14 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.5] - 2025-08-18
+
+### 🖼️ Social Preview Image Fix
+- **Use Actual Image**: Now using the provided hi-throp.png image directly
+- **No More Recreation**: Stopped trying to recreate the image with code
+- **Simpler Implementation**: Just displays the image file as intended
+- **Better Quality**: Uses the exact design provided instead of approximation
+
 ## [0.3.4] - 2025-08-18
 
 ### 🎨 Social Media Preview Enhancement
