@@ -89,6 +89,11 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.3] - 2025-08-18
+
+### 🎨 UI Clean-up
+- **Trending Prompts**: Removed "(live from the timeline)" text from trending prompts header for cleaner UI
+
 ## [0.3.2] - 2025-08-18
 
 ### 🧠 Throp Self-Awareness Update
