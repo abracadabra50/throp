@@ -2,6 +2,10 @@
 
 ## [2025-01-14] - CI/CD Overhaul & Frontend API Fix
 
+### Hotfix 🚨
+- **Frontend Chat Responses**: Fixed ES module error by adding `export const runtime = 'nodejs'` to all API routes
+- **Proxy Endpoint**: Now correctly streaming responses from backend to frontend
+
 ### Fixed 🔧
 - **CI/CD Pipeline**: Fixed GitHub Actions failures by removing problematic npm cache and regenerating package-lock.json
 - **Netlify 502 Errors**: Resolved all frontend API route failures (hot-takes, trending-prompts, proxy) by adding ANTHROPIC_MODEL to Cloud Run
