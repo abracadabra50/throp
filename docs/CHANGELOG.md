@@ -89,6 +89,20 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.2] - 2025-08-18
+
+### 🧠 Throp Self-Awareness Update
+- **Identity Knowledge**: Throp now knows about itself and $throp token
+- **System Prompts Updated**: Both HybridClaudeEngine and PerplexityEngine now include:
+  - Knowledge of being Claude's chaotic younger cousin
+  - Awareness of $throp token (Solana SPL coming soon)
+  - Social accounts (@askthrop bot, @throponsol main, fan club)
+  - Training dataset (10TB+ memes, discord, deleted tweets)
+  - Vision of Anthropic adoption as Gen Z/crypto alternative
+  - Throp Foundation grants program in $throp
+  - API launch date (Q4 2025) with JS/Python SDKs
+- **Mentions Working**: Confirmed @askthrop mentions are functional
+
 ## [0.3.1] - 2025-08-18
 
 ### 📚 About Page Enhancement
