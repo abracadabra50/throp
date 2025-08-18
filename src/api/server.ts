@@ -456,6 +456,64 @@ export class ApiServer {
         });
       }
     });
+    
+    // Twitter diagnostics endpoint
+    this.app.get('/api/twitter/diagnostics', async (_req: Request, res: Response) => {
+      try {
+        const config = getConfig();
+        const hasApiKey = !!config.twitter?.apiKey;
+        const hasApiSecret = !!config.twitter?.apiSecretKey;
+        const hasAccessToken = !!config.twitter?.accessToken;
+        const hasAccessSecret = !!config.twitter?.accessTokenSecret;
+        const hasBearerToken = !!config.twitter?.bearerToken;
+        const hasBotUserId = !!config.twitter?.botUserId;
+        
+        // Test if we can make a simple API call
+        let canRead = false;
+        let canWrite = false;
+        let errorDetails = null;
+        
+        if (this.twitterClient) {
+          try {
+            // Test read access with v2 API (using bearer token)
+            const v2Client = this.twitterClient.getV2Client();
+            const user = await v2Client.me();
+            canRead = !!user.data;
+          } catch (error) {
+            errorDetails = (error as any).message || 'Read test failed';
+          }
+        }
+        
+        res.json({
+          success: true,
+          oauth1: {
+            hasApiKey,
+            hasApiSecret,
+            hasAccessToken,
+            hasAccessSecret,
+            apiKeyLength: config.twitter?.apiKey?.length || 0,
+            accessTokenLength: config.twitter?.accessToken?.length || 0,
+          },
+          oauth2: {
+            hasBearerToken,
+            hasBotUserId,
+            bearerTokenLength: config.twitter?.bearerToken?.length || 0,
+            botUserId: config.twitter?.botUserId,
+          },
+          capabilities: {
+            canRead,
+            canWrite,
+            clientInitialized: !!this.twitterClient,
+          },
+          errorDetails,
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: (error as Error).message,
+        });
+      }
+    });
   }
 
   /**
