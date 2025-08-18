@@ -62,14 +62,14 @@ export async function GET() {
         topic: 'Viral Moment',
         trendingVolume: '800k posts',
         take: 'yall really watching someone do the bare minimum and calling it iconic',
-        timestamp: new Date(),
+      timestamp: new Date(),
         agreeCount: 3567,
         category: 'entertainment',
       },
     ];
     
-    return NextResponse.json({
-      success: true,
+    return NextResponse.json({ 
+      success: true, 
       takes: fallbackTakes,
       source: 'frontend-fallback',
       error: 'Using fallback data',

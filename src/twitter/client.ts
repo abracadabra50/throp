@@ -119,12 +119,15 @@ export class TwitterClient {
     
     try {
       const mentions = await this.executeWithRetry(async () => {
-        // Use readClient (Bearer Token) for better rate limits when reading mentions
-        const response = await this.readClient.v2.userMentionTimeline(
-          this.config.twitter.botUserId,
+        // Use search API instead of userMentionTimeline (works with Bearer Token)
+        // Search for mentions of our bot username
+        const searchQuery = `@${this.config.twitter.botUsername || 'askthrop'} -from:${this.config.twitter.botUsername || 'askthrop'}`;
+        
+        const response = await this.readClient.v2.search(
+          searchQuery,
           {
             since_id: sinceId,
-            max_results: Math.max(5, Math.min(maxResults, 100)), // Twitter API requires 5-100
+            max_results: Math.max(10, Math.min(maxResults, 100)), // Twitter API requires 10-100 for search
             'tweet.fields': [
               'author_id',
               'conversation_id',
@@ -151,7 +154,7 @@ export class TwitterClient {
         );
         
         // Update rate limit info
-        this.updateRateLimit('mentions', response.rateLimit);
+        this.updateRateLimit('search', response.rateLimit);
         
         return response;
       });
