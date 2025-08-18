@@ -54,7 +54,7 @@
 # Environment variables (these will be set in Netlify UI)
 [context.production.environment]
   NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"
-  NEXT_PUBLIC_BASE_URL = "https://throp.netlify.app"
+  NEXT_PUBLIC_BASE_URL = "https://chat.throp.ai"
 
 [context.deploy-preview.environment]
   NEXT_PUBLIC_API_URL = "https://enthusiastic-creation-production.up.railway.app/api/chat"

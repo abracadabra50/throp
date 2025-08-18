@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description: "hi im throp 🫠 no filter, no fluff, just straight facts with attitude fr",
     type: "website",
     locale: "en_GB",
-    url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://chat.throp.ai',
     siteName: "throp",
     images: [
       {
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   
   // Base URL for absolute image paths
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://chat.throp.ai'),
   
   // Robots
   robots: {

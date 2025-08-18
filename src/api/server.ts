@@ -457,7 +457,7 @@ export class ApiServer {
       }
     });
     
-    // Twitter diagnostics endpoint
+    // Twitter diagnostics endpoint - simplified to avoid hanging
     this.app.get('/api/twitter/diagnostics', async (_req: Request, res: Response) => {
       try {
         const config = getConfig();
@@ -468,37 +468,16 @@ export class ApiServer {
         const hasBearerToken = !!config.twitter?.bearerToken;
         const hasBotUserId = !!config.twitter?.botUserId;
         
-        // Test if we can make a simple API call
-        let canRead = false;
-        let canWrite = false;
-        let readError = null;
-        let writeError = null;
-        let initializationDetails = null;
+        // Don't test actual API calls - just check configuration
+        const canWrite = hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret;
+        const canRead = hasBearerToken && hasBotUserId;
         
-        if (this.twitterClient) {
-          // Test read access (should work with Bearer Token)
-          try {
-            await this.twitterClient.getMentions(undefined, 5);
-            canRead = true;
-          } catch (error) {
-            const errorMessage = (error as any).message || 'Read test failed';
-            readError = errorMessage;
-            // If it's a bot user ID error, that's different from auth error
-            if (errorMessage.includes('Bot user ID')) {
-              readError = 'Bot user ID not configured';
-            }
-          }
-          
-          // Check if OAuth 1.0a is properly configured for writing
-          canWrite = hasApiKey && hasApiSecret && hasAccessToken && hasAccessSecret;
-          
-          // Get initialization details
-          initializationDetails = {
-            hasOAuth1Client: hasApiKey && hasAccessToken,
-            hasBearerClient: hasBearerToken,
-            clientMode: (hasApiKey && hasAccessToken) ? 'OAuth 1.0a' : hasBearerToken ? 'Bearer Token Only' : 'None',
-          };
-        }
+        // Get initialization details
+        const initializationDetails = {
+          hasOAuth1Client: hasApiKey && hasAccessToken,
+          hasBearerClient: hasBearerToken,
+          clientMode: (hasApiKey && hasAccessToken) ? 'OAuth 1.0a' : hasBearerToken ? 'Bearer Token Only' : 'None',
+        };
         
         res.json({
           success: true,
@@ -524,10 +503,6 @@ export class ApiServer {
             clientInitialized: !!this.twitterClient,
           },
           initialization: initializationDetails,
-          errors: {
-            readError,
-            writeError,
-          },
         });
       } catch (error) {
         res.status(500).json({
@@ -535,6 +510,23 @@ export class ApiServer {
           error: (error as Error).message,
         });
       }
+    });
+    
+    // Check raw environment variables (for debugging)
+    this.app.get('/api/env-check', (_req: Request, res: Response) => {
+      res.json({
+        hasApiKey: !!process.env.TWITTER_API_KEY,
+        hasApiSecret: !!process.env.TWITTER_API_SECRET_KEY,
+        hasAccessToken: !!process.env.TWITTER_ACCESS_TOKEN,
+        hasAccessSecret: !!process.env.TWITTER_ACCESS_TOKEN_SECRET,
+        hasBearerToken: !!process.env.TWITTER_BEARER_TOKEN,
+        hasBotUserId: !!process.env.TWITTER_BOT_USER_ID,
+        apiKeyLength: process.env.TWITTER_API_KEY?.length || 0,
+        accessTokenLength: process.env.TWITTER_ACCESS_TOKEN?.length || 0,
+        // Show first 5 chars of each (safe to debug)
+        apiKeyPrefix: process.env.TWITTER_API_KEY?.substring(0, 5) || 'NOT_SET',
+        accessTokenPrefix: process.env.TWITTER_ACCESS_TOKEN?.substring(0, 5) || 'NOT_SET',
+      });
     });
     
     // Twitter test tweet endpoint (for debugging OAuth 1.0a)
