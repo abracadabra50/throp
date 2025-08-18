@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
+import Link from 'next/link';
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
 import { 
@@ -12,7 +13,6 @@ import {
   getLandingUrl,
   getDomainType 
 } from '@/utils/domain-detect';
-
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -427,10 +427,10 @@ export default function Home() {
 
         {/* Header */}
         <header className="flex justify-between items-center px-6 py-4 md:px-12 md:py-6">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-all">
             <Image src="/throp-actual.svg" alt="throp" width={45} height={45} className="wobble" />
             <span className="font-bold text-2xl">throp</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-6">
             <a 
               href="/about" 
@@ -727,7 +727,7 @@ export default function Home() {
       {/* Header with controls */}
       <header className="flex-shrink-0 border-b-4 border-black z-10" style={{ background: '#ffb088' }}>
         <div className="max-w-full px-3 md:px-6 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 md:gap-3">
+          <Link href="/" className="flex items-center gap-1.5 md:gap-3 hover:scale-105 transition-all">
             <Image 
               src="/throp-actual.svg" 
               alt="throp" 
@@ -739,7 +739,7 @@ export default function Home() {
             <h1 className="text-xl md:text-3xl font-bold" style={{ transform: 'rotate(-1deg)' }}>
               throp chat
             </h1>
-          </div>
+          </Link>
           
           {/* Controls */}
           <div className="flex items-center gap-1.5 md:gap-3">
