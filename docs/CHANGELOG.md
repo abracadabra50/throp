@@ -61,6 +61,10 @@ All notable changes to Throp will be documented in this file.
 - **Social Links Added**: New section with links to @askthrop (bot account), @throp (main account), and throp fan club community on X
 - **Reorganized Layout**: Moved contract section to bottom, added "join the chaos" social section above it
 
+### 🔗 Navigation Improvements
+- **Clickable Logo**: Throp logo in header now links to homepage on both landing page and chat interface
+- **Hover Effects**: Added scale animation on logo hover for better UX
+
 ## [0.3.0] - 2025-08-18
 
 ### 🚀 Major Infrastructure Migration
