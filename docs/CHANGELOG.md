@@ -131,6 +131,15 @@
 
 All notable changes to Throp will be documented in this file.
 
+## [0.3.4] - 2025-08-18
+
+### 🎨 Social Media Preview Enhancement
+- **Open Graph Image**: Redesigned with clean "Say hello to Claude Throp" design
+- **Twitter Card**: Matching minimalist aesthetic for consistent branding
+- **iMessage Preview**: Fixed ugly link previews with professional appearance
+- **Design Elements**: Cream background, orange sun icon, strikethrough on "Claude"
+- **Metadata**: Updated descriptions for cleaner, more professional social sharing
+
 ## [0.3.3] - 2025-08-18
 
 ### 🎨 UI Clean-up
