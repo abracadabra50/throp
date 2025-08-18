@@ -43,32 +43,23 @@ export async function POST(req: NextRequest) {
     
     // Convert to streaming format that the frontend expects
     const responseText = data.response || 'idk what to say lol';
-    const encoder = new TextEncoder();
     
     console.log('API Response:', responseText);
     
-    // Create a simple streaming response
-    const stream = new ReadableStream({
-      start(controller) {
-        // Clean the response text and send it
-        const cleanedText = responseText.replace(/\n/g, ' ').replace(/"/g, '\\"');
-        const chunk = `0:"${cleanedText}"\n`;
-        console.log('Sending chunk:', chunk);
-        controller.enqueue(encoder.encode(chunk));
-        controller.close();
-      },
-    });
+    // Return a simple text/event-stream response that Netlify can handle
+    const cleanedText = responseText.replace(/\n/g, ' ').replace(/"/g, '\\"');
+    const streamResponse = `0:"${cleanedText}"\n`;
     
-    return new Response(stream, {
+    return new NextResponse(streamResponse, {
+      status: 200,
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
       },
     });
   } catch (error) {
     console.error('Proxy error:', error);
-    return new Response(
+    return new NextResponse(
       JSON.stringify({ 
         error: 'Failed to connect to backend API',
         details: error instanceof Error ? error.message : 'Unknown error'
