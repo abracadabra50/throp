@@ -119,32 +119,6 @@ export default function About() {
           </p>
         </div>
 
-        {/* Contract Section */}
-        <div className="mb-16 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-3 border-black rounded-2xl" 
-             style={{ boxShadow: '4px 4px 0 #000' }}>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h3 className="font-bold text-lg mb-2">$throp contract</h3>
-              <p className="text-sm text-gray-600 mb-3">solana • SPL token</p>
-              <div className="flex items-center gap-3">
-                <code className="px-3 py-2 bg-white border-2 border-black rounded-lg font-mono text-sm">
-                  {contractAddress}
-                </code>
-                <button
-                  onClick={copyContract}
-                  className="px-4 py-2 bg-black text-white rounded-lg hover:scale-105 transition-all"
-                >
-                  {copied ? '✓ copied' : 'copy'}
-                </button>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-500">coming soon™</p>
-              <p className="text-xs text-gray-500">wen? soon fr</p>
-            </div>
-          </div>
-        </div>
-
         {/* Origin Story */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold mb-6">the lore</h2>
@@ -244,6 +218,76 @@ export default function About() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Socials Section */}
+        <div className="mb-16 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 border-3 border-black rounded-2xl" 
+             style={{ boxShadow: '4px 4px 0 #000', transform: 'rotate(0.5deg)' }}>
+          <h2 className="text-3xl font-bold mb-6">join the chaos 🌀</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            <a 
+              href="https://x.com/askthrop" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white border-2 border-black rounded-xl hover:scale-105 transition-all"
+            >
+              <span className="text-2xl">🤖</span>
+              <div>
+                <h3 className="font-bold">@askthrop</h3>
+                <p className="text-sm text-gray-600">mention for instant roasts</p>
+              </div>
+            </a>
+            <a 
+              href="https://x.com/throp" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white border-2 border-black rounded-xl hover:scale-105 transition-all"
+            >
+              <span className="text-2xl">🔥</span>
+              <div>
+                <h3 className="font-bold">@throp</h3>
+                <p className="text-sm text-gray-600">main account</p>
+              </div>
+            </a>
+            <a 
+              href="https://x.com/i/communities/1957214485829108164" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white border-2 border-black rounded-xl hover:scale-105 transition-all"
+            >
+              <span className="text-2xl">💫</span>
+              <div>
+                <h3 className="font-bold">throp fan club</h3>
+                <p className="text-sm text-gray-600">join the community</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        {/* Contract Section */}
+        <div className="mb-16 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-3 border-black rounded-2xl" 
+             style={{ boxShadow: '4px 4px 0 #000' }}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h3 className="font-bold text-lg mb-2">$throp contract</h3>
+              <p className="text-sm text-gray-600 mb-3">solana • SPL token</p>
+              <div className="flex items-center gap-3">
+                <code className="px-3 py-2 bg-white border-2 border-black rounded-lg font-mono text-sm">
+                  {contractAddress}
+                </code>
+                <button
+                  onClick={copyContract}
+                  className="px-4 py-2 bg-black text-white rounded-lg hover:scale-105 transition-all"
+                >
+                  {copied ? '✓ copied' : 'copy'}
+                </button>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">coming soon™</p>
+              <p className="text-xs text-gray-500">wen? soon fr</p>
+            </div>
           </div>
         </div>
 
