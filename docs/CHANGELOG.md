@@ -1,5 +1,47 @@
 # Changelog
 
+## [2025-01-18] - Frontend Chat Fixed & Hourly Caching Implemented 🎉
+
+### Major Frontend Fix 🔧
+- **Root Cause Found**: Local `.env.local` file was interfering with production builds
+- **Deep Debug**: Traced through entire frontend-backend flow to find the real issue
+- **Solution**: Removed local environment file that was overriding production settings
+- **Result**: Frontend chat now works perfectly via proxy endpoint
+
+### Features Removed 🗑️
+- **Message Reactions**: Removed fire/mid/trash rating system as requested
+- **Cleaner UI**: Simplified chat interface without unnecessary rating buttons
+- **Performance**: Reduced bundle size by removing unused rating functionality
+
+### Hourly Caching Added ⚡
+- **Hot Takes**: Now cached for 1 hour instead of 30 minutes for cost optimization
+- **Fresh Content**: Updates every hour to keep content current
+- **Cost Savings**: Significantly reduced API calls while maintaining quality
+
+## [2025-01-18] - Frontend-Backend Connectivity Fix 🔧
+
+### Fixed 🔧
+- **Frontend API Connection**: Fixed frontend not connecting to Google Cloud Run backend
+- **Environment Variables**: Updated Netlify configuration to use correct Google Cloud Run URL
+- **API Routing Logic**: Frontend now properly detects `run.app` URLs for direct connection
+- **CORS Configuration**: Verified CORS settings allow requests from `https://chat.throp.ai`
+- **Proxy Fallback**: Proxy endpoint working correctly as backup for cross-origin requests
+
+### Updated 📄
+- **Netlify Configuration**: Updated `netlify.toml` to point to Google Cloud Run instead of Railway
+- **Environment Scripts**: Updated deployment scripts with correct backend URL
+- **Documentation**: Added troubleshooting guide for frontend-backend connectivity
+
+### Added ✨
+- **Environment Update Script**: Created `web/update-netlify-env.sh` for easy Netlify env var updates
+- **Connection Testing**: Added comprehensive testing of API endpoints and CORS
+
+### Technical Details 🔍
+- **Root Cause**: Netlify environment variables were pointing to old Railway URL (`enthusiastic-creation-production.up.railway.app`)
+- **Solution**: Updated to Google Cloud Run URL (`throp-bot-947985992378.us-central1.run.app`)
+- **Frontend Logic**: Code checks for 'run.app' in URL to determine direct vs proxy connection
+- **Backend Status**: Google Cloud Run backend is fully operational and responding correctly
+
 ## [2025-01-14] - CI/CD Overhaul, Twitter Bot Fix & Redis Integration
 
 ### Redis Integration for Duplicate Prevention 🗄️

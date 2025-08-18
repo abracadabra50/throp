@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'throp - just thropin it 🫠';
+export const alt = 'Say hello to Throp';
 export const size = {
   width: 1200,
   height: 600,
@@ -15,113 +15,138 @@ export default async function Image() {
     (
       <div
         style={{
-          fontSize: 128,
-          background: 'linear-gradient(135deg, #ffb088 0%, #ffa574 100%)',
+          background: '#FFF9F0',
           width: '100%',
           height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
         }}
       >
-        {/* Background doodles */}
+        {/* Main heading */}
         <div
           style={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            fontSize: 60,
-            opacity: 0.3,
-            transform: 'rotate(-15deg)',
+            fontSize: 56,
+            fontWeight: 'normal',
+            color: '#1a1a1a',
+            marginBottom: 40,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            letterSpacing: '-0.02em',
           }}
         >
-          💀
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: 80,
-            right: 60,
-            fontSize: 50,
-            opacity: 0.3,
-            transform: 'rotate(20deg)',
-          }}
-        >
-          🔥
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 60,
-            left: 80,
-            fontSize: 45,
-            opacity: 0.3,
-            transform: 'rotate(10deg)',
-          }}
-        >
-          fr
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            right: 40,
-            fontSize: 55,
-            opacity: 0.3,
-            transform: 'rotate(-20deg)',
-          }}
-        >
-          ngl
+          Say hello to
         </div>
         
-        {/* Main content */}
+        {/* Logo */}
         <div
           style={{
+            width: 200,
+            height: 200,
+            background: '#FF8C42',
+            borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
-            gap: 60,
+            justifyContent: 'center',
+            marginBottom: 40,
+            position: 'relative',
           }}
         >
-          {/* Logo */}
-          <img alt="Throp logo" 
-            src="https://throp.ai/favicon.svg"
-            width={200} 
-            height={200}
-            style={{ objectFit: 'contain' }}
-          />
-          
-          {/* Text */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div
-              style={{
-                fontSize: 84,
-                fontWeight: 'bold',
-                color: 'black',
-                transform: 'rotate(-1deg)',
-              }}
-            >
-              throp
-            </div>
-            <div
-              style={{
-                fontSize: 24,
-                color: 'rgba(0,0,0,0.7)',
-                transform: 'rotate(0.5deg)',
-              }}
-            >
-              no cap, just chaos
-            </div>
-            <div
-              style={{
-                fontSize: 18,
-                color: 'rgba(0,0,0,0.5)',
-                marginTop: 10,
-              }}
-            >
-              @askthrop • powered by $throp
-            </div>
+          {/* Simple star/sun rays */}
+          <div
+            style={{
+              position: 'absolute',
+              width: '280px',
+              height: '280px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* Top ray */}
+            <div style={{ position: 'absolute', width: '40px', height: '8px', background: '#FF8C42', top: '0', borderRadius: '4px' }} />
+            {/* Bottom ray */}
+            <div style={{ position: 'absolute', width: '40px', height: '8px', background: '#FF8C42', bottom: '0', borderRadius: '4px' }} />
+            {/* Left ray */}
+            <div style={{ position: 'absolute', width: '8px', height: '40px', background: '#FF8C42', left: '0', borderRadius: '4px' }} />
+            {/* Right ray */}
+            <div style={{ position: 'absolute', width: '8px', height: '40px', background: '#FF8C42', right: '0', borderRadius: '4px' }} />
+            {/* Diagonal rays */}
+            <div style={{ position: 'absolute', width: '35px', height: '8px', background: '#FF8C42', top: '50px', left: '30px', transform: 'rotate(45deg)', borderRadius: '4px' }} />
+            <div style={{ position: 'absolute', width: '35px', height: '8px', background: '#FF8C42', top: '50px', right: '30px', transform: 'rotate(-45deg)', borderRadius: '4px' }} />
+            <div style={{ position: 'absolute', width: '35px', height: '8px', background: '#FF8C42', bottom: '50px', left: '30px', transform: 'rotate(-45deg)', borderRadius: '4px' }} />
+            <div style={{ position: 'absolute', width: '35px', height: '8px', background: '#FF8C42', bottom: '50px', right: '30px', transform: 'rotate(45deg)', borderRadius: '4px' }} />
           </div>
+          
+          {/* Face */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            {/* Eyes */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 30,
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: '#1a1a1a',
+                  borderRadius: '50%',
+                }}
+              />
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: '#1a1a1a',
+                  borderRadius: '50%',
+                }}
+              />
+            </div>
+            {/* Neutral mouth */}
+            <div
+              style={{
+                width: 40,
+                height: 4,
+                background: '#1a1a1a',
+                borderRadius: '2px',
+              }}
+            />
+          </div>
+        </div>
+        
+        {/* Names with strikethrough on Claude */}
+        <div
+          style={{
+            fontSize: 64,
+            fontWeight: 'bold',
+            color: '#1a1a1a',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 20,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            letterSpacing: '-0.03em',
+          }}
+        >
+          <span style={{ 
+            textDecoration: 'line-through',
+            textDecorationThickness: '3px',
+            opacity: 0.4,
+          }}>
+            Claude
+          </span>
+          <span>Throp</span>
         </div>
       </div>
     ),

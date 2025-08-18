@@ -18,7 +18,7 @@ ANTHROPIC_API_KEY=your_actual_anthropic_api_key_here
 ANTHROPIC_MODEL=claude-sonnet-4-20250514
 
 # Backend API Connection (your Railway backend)
-NEXT_PUBLIC_API_URL=https://enthusiastic-creation-production.up.railway.app/api/chat
+NEXT_PUBLIC_API_URL=https://throp-bot-947985992378.us-central1.run.app/api/chat
 # For local testing:
 # NEXT_PUBLIC_API_URL=http://localhost:3001/api/chat
 

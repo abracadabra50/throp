@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Browser Request</title>
+</head>
+<body>
+    <h1>Browser Request Test</h1>
+    <button onclick="testRequest()">Test Chat Request</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testRequest() {
+            console.log('Starting browser test request...');
+            
+            const messagesToSend = [
+                { role: 'user', content: 'browser test message' }
+            ];
+            
+            console.log('Sending messages:', messagesToSend);
+            
+            try {
+                const response = await fetch('/api/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: messagesToSend,
+                    }),
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">Error ${response.status}: ${errorText}</p>`;
+                    return;
+                }
+                
+                const responseText = await response.text();
+                console.log('Success response:', responseText);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: green;">Success: ${responseText}</p>`;
+                    
+            } catch (error) {
+                console.error('Request failed:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">Request failed: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

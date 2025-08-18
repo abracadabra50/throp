@@ -29,7 +29,7 @@ netlify env:set ANTHROPIC_API_KEY "sk-ant-api03-IPFUm4Oz85mEDZYN2I6rLNgC9drXspWt
 netlify env:set ANTHROPIC_MODEL "claude-sonnet-4-20250514"
 
 # Backend connection
-netlify env:set NEXT_PUBLIC_API_URL "https://enthusiastic-creation-production.up.railway.app/api/chat"
+netlify env:set NEXT_PUBLIC_API_URL "https://throp-bot-947985992378.us-central1.run.app/api/chat"
 
 # Base URL (will be updated after deploy)
 netlify env:set NEXT_PUBLIC_BASE_URL "https://throp.netlify.app"

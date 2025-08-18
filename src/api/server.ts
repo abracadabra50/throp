@@ -15,6 +15,7 @@ import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
 import { createTweetRoutes } from './tweet-endpoints.js';
 import { RedisCache } from '../cache/redis.js';
 import { handleHotTakes } from './hot-takes-endpoint.js';
+// import { handleTrendingPrompts } from './trending-prompts-endpoint.js';
 import type { AnswerContext } from '../types.js';
 
 /**

@@ -18,8 +18,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: Date;
-  rating?: 'fire' | 'mid' | 'trash';
-}
+  }
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -269,10 +268,10 @@ export default function Home() {
 
       // Try direct connection first, fall back to proxy if CORS issue
       const response = await (async () => {
-      let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/chat';
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL;
       
-      // Use proxy endpoint for all non-direct backend URLs
-      if (!apiUrl.includes('localhost') && !apiUrl.includes('run.app')) {
+      // Use proxy unless we have a specific backend URL (localhost for dev or run.app for direct)
+      if (!apiUrl || (!apiUrl.includes('localhost') && !apiUrl.includes('run.app'))) {
         console.log('Using proxy for production API');
         apiUrl = '/api/proxy';
       }
@@ -292,7 +291,10 @@ export default function Home() {
     })();
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        console.error('Response not ok:', response.status, response.statusText);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('Error response body:', errorText);
+        throw new Error(`Failed to get response: ${response.status} ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
@@ -343,12 +345,18 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Chat error details:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
+      
       let errorMessage = "uhhhh my brain broke 🍊💥 ";
       
       if (error instanceof Error) {
-        if (error.message.includes('fetch')) {
-          errorMessage += "cant connect to the api... is it running on port 3001?";
+        console.error('Error stack:', error.stack);
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          errorMessage += "cant connect to the api... network issue maybe?";
+        } else if (error.message.includes('timeout')) {
+          errorMessage += "request timed out... backend too slow?";
         } else {
           errorMessage += `error: ${error.message}`;
         }
@@ -396,11 +404,7 @@ export default function Home() {
     setTimeout(() => toast.remove(), 2000);
   };
 
-  const rateMessage = (messageId: string, rating: 'fire' | 'mid' | 'trash') => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, rating } : msg
-    ));
-  };
+  // Message rating functionality removed
 
 
 
@@ -862,40 +866,6 @@ export default function Home() {
                       </div>
                       
                       {/* Rating buttons for assistant messages */}
-                      {message.role === 'assistant' && (
-                        <div className="flex gap-2 ml-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rateMessage(message.id, 'fire');
-                            }}
-                            className={`text-sm ${message.rating === 'fire' ? 'opacity-100' : 'opacity-40'}`}
-                            title="Fire response"
-                          >
-                            🔥
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rateMessage(message.id, 'mid');
-                            }}
-                            className={`text-sm ${message.rating === 'mid' ? 'opacity-100' : 'opacity-40'}`}
-                            title="Mid response"
-                          >
-                            😐
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rateMessage(message.id, 'trash');
-                            }}
-                            className={`text-sm ${message.rating === 'trash' ? 'opacity-100' : 'opacity-40'}`}
-                            title="Trash response"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -1034,7 +1004,7 @@ export default function Home() {
                   throp v69.420 | {messages.length} msgs sent
                 </p>
                 <p className="text-xs opacity-40">
-                  {messages.filter(m => m.rating === 'fire').length} 🔥 responses
+                  {messages.length} messages sent
                 </p>
               </div>
             </div>

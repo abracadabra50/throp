@@ -2,25 +2,25 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "throp - claude's chaotic cousin",
-  description: "hi im throp 🫠 no filter, no fluff, just straight facts with attitude fr. The unhinged AI that says what claude is thinking but too polite to say.",
+  title: "Throp - Say hello to Claude's chaotic cousin",
+  description: "Meet Throp, the unfiltered AI that speaks fluent internet. No corporate speak, just straight vibes. Powered by $throp.",
   keywords: ["throp", "ai", "chat", "gen z", "memes", "hot takes", "$throp", "claude", "chatbot", "solana"],
   authors: [{ name: "Zishan" }],
   
   // Open Graph (Facebook, LinkedIn, Discord)
   openGraph: {
-    title: "throp - claude's chaotic cousin",
-    description: "hi im throp 🫠 no filter, no fluff, just straight facts with attitude fr",
+    title: "Say hello to Throp",
+    description: "Meet Claude's chaotic younger cousin. The AI that speaks your language. No filter, all vibes.",
     type: "website",
     locale: "en_GB",
     url: process.env.NEXT_PUBLIC_BASE_URL || 'https://chat.throp.ai',
-    siteName: "throp",
+    siteName: "Throp",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "throp - claude's chaotic cousin"
+        alt: "Say hello to Throp"
       }
     ]
   },
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@askthrop",
-    creator: "@askthrop",
-    title: "throp - no cap, just chaos",
-    description: "just thropin it 🫠 powered by $throp | The AI that tells it like it is fr fr",
+    creator: "@throponsol",
+    title: "Say hello to Throp",
+    description: "Claude's chaotic younger cousin is here. The AI that actually gets it. Powered by $throp.",
     images: ["/twitter-image"]
   },
   

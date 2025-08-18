@@ -1,22 +1,12 @@
 /**
  * Hot Takes Endpoint - Uses Perplexity to find SPECIFIC current events
- * Now with hourly Redis caching for fresh content and cost optimization
  */
 import { logger } from '../utils/logger.js';
 import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
-import { getRedisCache } from '../cache/redis.js';
 import Anthropic from '@anthropic-ai/sdk';
-// Hourly cache duration for fresh content with cost optimization
-const HOURLY_CACHE_DURATION = 60 * 60; // 1 hour in seconds
-const CACHE_KEY_PREFIX = 'hot-takes';
-/**
- * Get cache key for current hour's hot takes
- */
-function getCurrentHourCacheKey() {
-    const now = new Date();
-    const hourKey = now.toISOString().slice(0, 13); // YYYY-MM-DDTHH
-    return `${CACHE_KEY_PREFIX}:${hourKey}`;
-}
+// Cache for hot takes  
+let cachedHotTakes = null;
+const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 /**
  * Get current date context for more specific queries
  */
@@ -38,7 +28,7 @@ function getCurrentContext() {
     };
 }
 /**
- * Fetch SPECIFIC trending topics using Perplexity (only called once per hour)
+ * Fetch SPECIFIC trending topics using Perplexity
  */
 async function fetchSpecificTrends() {
     try {
@@ -50,14 +40,12 @@ async function fetchSpecificTrends() {
             `What specific tech company made news today? Include the company name and what they did.`,
             `What specific sports game or match result is trending right now? Include team names and score if available.`,
             `What specific political event or statement happened in the last 24 hours? Include names.`,
-            `What viral video or meme is everyone talking about today specifically?`,
-            `What specific AI or tech announcement happened this week? Include company names.`,
-            `What specific market or crypto event is trending? Include specific coins or stocks.`
+            `What viral video or meme is everyone talking about today specifically?`
         ];
-        // Randomly pick 4-6 prompts to vary the topics each hour
+        // Randomly pick 3-5 prompts to vary the topics
         const selectedPrompts = prompts
             .sort(() => Math.random() - 0.5)
-            .slice(0, Math.floor(Math.random() * 3) + 4); // 4-6 prompts
+            .slice(0, 3);
         const topics = [];
         for (const prompt of selectedPrompts) {
             try {
@@ -115,41 +103,34 @@ function getTimeSpecificTopics() {
     const day = now.getDay();
     const month = now.getMonth();
     const topics = [];
-    // Time-based topics (changes every hour)
+    // Time-based topics
     if (hour >= 6 && hour < 9) {
         topics.push({ name: 'Morning Coffee Prices', context: 'Starbucks raised prices again' });
         topics.push({ name: 'Rush Hour Traffic', context: 'Major delays on highways' });
-        topics.push({ name: 'Breakfast Inflation', context: 'Cereal costs more than rent' });
     }
     else if (hour >= 9 && hour < 12) {
         topics.push({ name: 'Stock Market Opening', context: 'Tech stocks volatile' });
         topics.push({ name: 'Work Meeting Memes', context: 'Another pointless Zoom call' });
-        topics.push({ name: 'Email Overload', context: 'Reply all disasters' });
     }
     else if (hour >= 12 && hour < 14) {
         topics.push({ name: 'Lunch Break Drama', context: 'Office microwave etiquette debate' });
         topics.push({ name: 'Food Delivery Apps', context: 'DoorDash fees controversy' });
-        topics.push({ name: 'Salad Price Shock', context: '$18 for lettuce and sadness' });
     }
     else if (hour >= 14 && hour < 17) {
         topics.push({ name: 'Afternoon Slump', context: '3pm energy crisis' });
         topics.push({ name: 'School Pickup Chaos', context: 'Parent parking lot drama' });
-        topics.push({ name: 'Coffee Shop WiFi', context: 'Remote workers hogging tables' });
     }
     else if (hour >= 17 && hour < 20) {
         topics.push({ name: 'Commute Home', context: 'Public transport delays' });
         topics.push({ name: 'Dinner Plans', context: 'Restaurant reservation apps down' });
-        topics.push({ name: 'Happy Hour Prices', context: '$20 cocktails in this economy' });
     }
     else if (hour >= 20 && hour < 23) {
         topics.push({ name: 'Netflix New Release', context: 'Latest show everyone\'s watching' });
         topics.push({ name: 'Gaming Server Issues', context: 'Popular game servers crashed' });
-        topics.push({ name: 'Streaming Wars', context: 'Too many subscriptions' });
     }
     else {
         topics.push({ name: 'Late Night Thoughts', context: '3am existential crisis tweets' });
         topics.push({ name: 'Insomnia Club', context: 'Can\'t sleep gang' });
-        topics.push({ name: 'Night Shift Life', context: 'Working while world sleeps' });
     }
     // Day-specific topics
     const dayTopics = {
@@ -164,13 +145,25 @@ function getTimeSpecificTopics() {
     if (dayTopics[day]) {
         topics.push(dayTopics[day]);
     }
-    // Add some variety based on hour for fallback topics
-    const hourlyVariations = [
-        { name: `${hour}:00 Energy Check`, context: `How are we feeling at ${hour}:00?` },
-        { name: 'Current Mood', context: `${hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening'} vibes` }
-    ];
-    topics.push(...hourlyVariations);
-    return topics.slice(0, 6); // Return more topics for variety
+    // Month-specific (seasonal)
+    const monthTopics = {
+        0: { name: 'New Year Gym Crowds', context: 'Resolution people everywhere' },
+        1: { name: 'Valentine\'s Day Prices', context: 'Roses cost how much?' },
+        2: { name: 'March Madness Brackets', context: 'Everyone\'s an expert' },
+        3: { name: 'Tax Season Panic', context: 'Deadline approaching' },
+        4: { name: 'May Allergies', context: 'Pollen count off the charts' },
+        5: { name: 'Summer Vacation Plans', context: 'Everything is booked' },
+        6: { name: 'July Heat Wave', context: 'AC working overtime' },
+        7: { name: 'Back to School Shopping', context: 'Supply lists are insane' },
+        8: { name: 'Pumpkin Spice Everything', context: 'It\'s still 90 degrees' },
+        9: { name: 'Halloween Costume Drama', context: 'Everything sold out' },
+        10: { name: 'Black Friday Planning', context: 'Deals aren\'t even good' },
+        11: { name: 'Holiday Travel Chaos', context: 'Flights all delayed' }
+    };
+    if (monthTopics[month]) {
+        topics.push(monthTopics[month]);
+    }
+    return topics.slice(0, 5);
 }
 /**
  * Generate a hot take for a specific trend
@@ -214,28 +207,19 @@ async function generateHotTakes() {
     // Fetch specific trending topics
     const trends = await fetchSpecificTrends();
     const takes = [];
-    for (let i = 0; i < Math.min(trends.length, 6); i++) { // Generate up to 6 takes
+    for (let i = 0; i < Math.min(trends.length, 5); i++) {
         const trend = trends[i];
         const take = await generateThropTake(trend);
-        // Generate realistic-looking tweet volumes that vary by hour
-        const hour = new Date().getHours();
-        const baseVolumes = ['2.3M', '1.8M', '847K', '421K', '156K', '92.5K'];
-        // Peak hours get higher volumes
-        let volumeMultiplier = 1;
-        if (hour >= 9 && hour <= 11)
-            volumeMultiplier = 1.5; // Morning peak
-        if (hour >= 17 && hour <= 20)
-            volumeMultiplier = 1.3; // Evening peak
-        if (hour >= 20 && hour <= 23)
-            volumeMultiplier = 1.2; // Night peak
-        const volume = baseVolumes[i] || `${Math.floor(Math.random() * 900 + 100)}K`;
+        // Generate realistic-looking tweet volumes
+        const volumes = ['2.3M', '847K', '421K', '156K', '92.5K'];
+        const volume = volumes[i] || `${Math.floor(Math.random() * 900 + 100)}K`;
         takes.push({
             id: `take-${Date.now()}-${i}`,
             topic: trend.name,
             trendingVolume: `${volume} posts`,
             take,
             timestamp: new Date(),
-            agreeCount: Math.floor(Math.random() * 5000 * volumeMultiplier) + 500,
+            agreeCount: Math.floor(Math.random() * 5000) + 500,
             category: determineCategory(trend.name)
         });
     }
@@ -273,72 +257,43 @@ function determineCategory(name) {
     return 'trending';
 }
 /**
- * Hot takes endpoint handler with hourly Redis caching
+ * Hot takes endpoint handler
  */
 export async function handleHotTakes(_req, res) {
     try {
         logger.info('Hot takes endpoint called');
-        const cache = getRedisCache();
-        const cacheKey = getCurrentHourCacheKey();
-        // Try to get from Redis cache first
-        try {
-            const cachedData = await cache.get(cacheKey);
-            if (cachedData) {
-                const parsedData = JSON.parse(cachedData);
-                logger.info('Returning cached hot takes from Redis', {
-                    generatedAt: parsedData.generatedAt,
-                    count: parsedData.takes.length,
-                    cacheKey
-                });
-                res.json({
-                    success: true,
-                    takes: parsedData.takes,
-                    source: 'redis-hourly-cache',
-                    generatedAt: parsedData.generatedAt,
-                    nextUpdate: parsedData.nextUpdate
-                });
-                return;
-            }
-        }
-        catch (cacheError) {
-            logger.warn('Failed to get from cache, generating fresh', { cacheError });
+        // Check cache first (but shorter duration for more current takes)
+        if (cachedHotTakes && cachedHotTakes.expiresAt > new Date()) {
+            logger.info('Returning cached hot takes');
+            res.json({
+                success: true,
+                takes: cachedHotTakes.takes,
+                source: 'backend-cached'
+            });
+            return;
         }
         // Generate new hot takes with specific trends
-        logger.info('Generating fresh hot takes from specific trends (will cache for 1 hour)');
+        logger.info('Generating fresh hot takes from specific trends');
         const takes = await generateHotTakes();
-        // Calculate next update time
+        // Update cache
         const now = new Date();
-        const nextUpdate = new Date(now);
-        nextUpdate.setHours(nextUpdate.getHours() + 1, 0, 0, 0); // Next hour on the hour
-        // Cache in Redis for 1 hour
-        const cacheData = {
+        cachedHotTakes = {
             takes,
-            generatedAt: now.toISOString(),
-            nextUpdate: nextUpdate.toISOString()
+            generatedAt: now,
+            expiresAt: new Date(now.getTime() + CACHE_DURATION_MS)
         };
-        try {
-            await cache.set(cacheKey, JSON.stringify(cacheData), HOURLY_CACHE_DURATION);
-            logger.info('Cached hot takes in Redis for 1 hour', {
-                key: cacheKey,
-                nextUpdate: nextUpdate.toISOString()
-            });
-        }
-        catch (cacheError) {
-            logger.warn('Failed to cache hot takes', { cacheError });
-        }
         res.json({
             success: true,
             takes,
-            source: 'generated-fresh',
-            generatedAt: now.toISOString(),
-            nextUpdate: nextUpdate.toISOString()
+            source: 'backend-perplexity-specific',
+            generatedAt: now
         });
     }
     catch (error) {
         logger.error('Failed to generate hot takes', { error });
         // Return time-specific fallback
         const fallbackTopics = getTimeSpecificTopics();
-        const fallbackTakes = fallbackTopics.slice(0, 4).map((topic, index) => ({
+        const fallbackTakes = fallbackTopics.slice(0, 3).map((topic, index) => ({
             id: `fallback-${Date.now()}-${index}`,
             topic: topic.name,
             trendingVolume: `${Math.floor(Math.random() * 500 + 50)}K posts`,
@@ -350,8 +305,8 @@ export async function handleHotTakes(_req, res) {
         res.json({
             success: true,
             takes: fallbackTakes,
-            source: 'fallback-error'
+            source: 'backend-fallback-specific'
         });
     }
 }
-//# sourceMappingURL=hot-takes-endpoint.js.map
+//# sourceMappingURL=hot-takes-endpoint-backup.js.map
