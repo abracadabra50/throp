@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "Throp",
     images: [
       {
-        url: "/hi-throp.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Say hello to Throp"
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     creator: "@throponsol",
     title: "Say hello to Throp",
     description: "Claude's chaotic younger cousin is here. The AI that actually gets it. Powered by $throp.",
-    images: ["/hi-throp.png"]
+    images: ["/twitter-image"]
   },
   
   // Additional metadata
