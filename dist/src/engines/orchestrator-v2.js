@@ -1,0 +1,315 @@
+/**
+ * Throp Orchestrator v2 - The brain that coordinates evidence gathering and chaos generation
+ * Understands all internet culture: crypto, gaming, streaming, tech, memes, and beyond
+ */
+import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '../utils/logger.js';
+import { WebSearchTool } from './tools/web-search.js';
+import { TwitterTool } from './tools/twitter-tools.js';
+import { GeckoTerminalTool } from './tools/gecko-terminal.js';
+import { ResponseGenerator } from './response-generator.js';
+/**
+ * Main orchestrator that coordinates Throp's response generation
+ */
+export class ThropOrchestratorV2 {
+    anthropic;
+    webSearch;
+    twitter;
+    gecko;
+    responseGenerator;
+    constructor() {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+            throw new Error('ANTHROPIC_API_KEY is required for orchestrator');
+        }
+        this.anthropic = new Anthropic({ apiKey });
+        this.webSearch = new WebSearchTool();
+        this.twitter = new TwitterTool();
+        this.gecko = new GeckoTerminalTool();
+        this.responseGenerator = new ResponseGenerator();
+    }
+    /**
+     * Main processing pipeline
+     */
+    async process(input, context) {
+        logger.info('Orchestrator V2 processing input', { input: input.substring(0, 100) });
+        try {
+            // Step 1: Gather evidence using tools
+            const evidence = await this.gatherEvidence(input);
+            logger.info('Evidence gathered', {
+                intent: evidence.intent,
+                domain: evidence.domain,
+                facts: evidence.evidence.key_facts.length,
+                confidence: evidence.confidence
+            });
+            // Step 2: Handle disambiguation if needed
+            if (evidence.needs_disambiguation) {
+                return this.handleDisambiguation(evidence);
+            }
+            // Step 3: Generate dynamic response using LLM
+            const response = await this.responseGenerator.generateResponse(evidence);
+            return {
+                text: response,
+                confidence: evidence.confidence,
+                metadata: {
+                    intent: evidence.intent,
+                    domain: evidence.domain,
+                    sources: evidence.evidence.sources
+                }
+            };
+        }
+        catch (error) {
+            logger.error('Orchestrator failed', error);
+            return {
+                text: "skill issue on my end... try again or touch grass idk",
+                confidence: 0.1,
+                metadata: { error: true }
+            };
+        }
+    }
+    /**
+     * Gather evidence using Claude with tools
+     */
+    async gatherEvidence(input) {
+        const tools = this.getToolDefinitions();
+        const systemPrompt = `You are an AI assistant gathering information for Throp.
+Your job is to collect FACTS and EVIDENCE using the available tools.
+
+CRITICAL RULES:
+1. For "who is X" queries → use search_web AND search_twitter or get_twitter_profile
+2. For price/token queries → use check_crypto_price 
+3. For current events/drama → use search_twitter AND search_web
+4. For gaming topics → search for game news, patch notes, esports results
+5. For tech topics → search for company news, product launches, drama
+6. For general culture → search broadly for context
+
+Identify the domain:
+- crypto: tokens, DeFi, blockchain, NFTs
+- gaming: games, esports, streamers, patches
+- streaming: Twitch, YouTube, content creators
+- tech: startups, AI, programming, tech companies
+- academic: research, papers, university drama
+- fitness: gym culture, supplements, influencers
+- food: restaurants, cooking, food trends
+- general: everything else
+
+Output JSON:
+{
+  "intent": "identity|market|drama|gaming|tech|culture|explainer|roast|pure_chaos",
+  "domain": "crypto|gaming|streaming|tech|academic|fitness|food|general",
+  "query": "original query",
+  "needs_tools": true/false,
+  "confidence": 0.0-1.0
+}`;
+        try {
+            // First pass: determine intent and whether we need tools
+            const intentResponse = await this.anthropic.messages.create({
+                model: 'claude-3-haiku-20240307', // Use cheaper model for intent
+                max_tokens: 500,
+                temperature: 0.3,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: input }]
+            });
+            const intentText = intentResponse.content[0].type === 'text' ? intentResponse.content[0].text : '{}';
+            const intentData = JSON.parse(intentText);
+            // If we don't need tools (pure opinion/chaos), return early
+            if (!intentData.needs_tools || intentData.intent === 'pure_chaos') {
+                return {
+                    intent: intentData.intent || 'pure_chaos',
+                    domain: intentData.domain || 'general',
+                    query: input,
+                    evidence: {
+                        key_facts: [],
+                        sources: []
+                    },
+                    confidence: 0.8,
+                    needs_disambiguation: false
+                };
+            }
+            // Second pass: use tools to gather evidence
+            const toolResponse = await this.anthropic.messages.create({
+                model: 'claude-3-sonnet-20241022',
+                max_tokens: 2000,
+                temperature: 0.3,
+                tools,
+                system: `Gather evidence about: ${input}
+Use tools to find current, accurate information.
+Focus on the ${intentData.domain} domain.`,
+                messages: [{ role: 'user', content: input }]
+            });
+            // Execute tool calls
+            const evidence = await this.executeToolCalls(toolResponse, intentData);
+            evidence.intent = intentData.intent;
+            evidence.domain = intentData.domain;
+            evidence.query = input;
+            return evidence;
+        }
+        catch (error) {
+            logger.error('Evidence gathering failed', error);
+            return {
+                intent: 'pure_chaos',
+                domain: 'general',
+                query: input,
+                evidence: { key_facts: [], sources: [] },
+                confidence: 0.5,
+                needs_disambiguation: false
+            };
+        }
+    }
+    /**
+     * Get tool definitions for Anthropic
+     */
+    getToolDefinitions() {
+        return [
+            {
+                name: 'search_web',
+                description: 'Search for current information, news, drama, or any topic. Works for gaming, tech, culture, everything.',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        query: { type: 'string', description: 'Search query' },
+                        recency: {
+                            type: 'string',
+                            enum: ['hour', 'day', 'week', 'month'],
+                            description: 'How recent the results should be',
+                            default: 'day'
+                        }
+                    },
+                    required: ['query']
+                }
+            },
+            {
+                name: 'search_twitter',
+                description: 'Search X/Twitter for tweets, discourse, drama, opinions about any topic',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        query: { type: 'string', description: 'Search query' },
+                        limit: { type: 'number', default: 10, minimum: 5, maximum: 20 }
+                    },
+                    required: ['query']
+                }
+            },
+            {
+                name: 'get_twitter_profile',
+                description: 'Get X/Twitter user profile info to identify someone',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        handle: { type: 'string', description: 'Twitter handle with or without @' }
+                    },
+                    required: ['handle']
+                }
+            },
+            {
+                name: 'check_crypto_price',
+                description: 'Get real-time crypto token prices and market data (only use for crypto)',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        token: { type: 'string', description: 'Token symbol or contract' },
+                        network: { type: 'string', description: 'Network name', default: 'solana' }
+                    },
+                    required: ['token']
+                }
+            }
+        ];
+    }
+    /**
+     * Execute tool calls from Claude's response
+     */
+    async executeToolCalls(response, intentData) {
+        const evidence = {
+            intent: intentData.intent,
+            domain: intentData.domain,
+            query: intentData.query,
+            evidence: {
+                key_facts: [],
+                sources: []
+            },
+            confidence: 0.7,
+            needs_disambiguation: false
+        };
+        // Check if Claude wants to use tools
+        if (response.stop_reason !== 'tool_use') {
+            return evidence;
+        }
+        // Execute each tool call
+        for (const content of response.content) {
+            if (content.type === 'tool_use') {
+                const toolName = content.name;
+                const toolInput = content.input;
+                logger.info('Executing tool', { tool: toolName, input: toolInput });
+                try {
+                    switch (toolName) {
+                        case 'search_web':
+                            const webResults = await this.webSearch.search(toolInput.query, toolInput.recency);
+                            evidence.evidence.web_results = webResults;
+                            evidence.evidence.key_facts.push(...this.extractKeyFacts(webResults));
+                            evidence.evidence.sources.push(...webResults.map(r => r.url));
+                            break;
+                        case 'search_twitter':
+                            const tweets = await this.twitter.searchTweets(toolInput.query, toolInput.limit);
+                            evidence.evidence.twitter_data = { tweets };
+                            if (tweets.tweets.length > 0) {
+                                evidence.evidence.key_facts.push(`Twitter consensus: ${tweets.tweets[0].text.substring(0, 100)}`);
+                            }
+                            break;
+                        case 'get_twitter_profile':
+                            const profile = await this.twitter.getProfile(toolInput.handle);
+                            evidence.evidence.twitter_data = { profile };
+                            if (profile) {
+                                evidence.evidence.key_facts.push(`${profile.name} (@${profile.username}): ${profile.description}`, `${profile.followers_count} followers`);
+                            }
+                            break;
+                        case 'check_crypto_price':
+                            const priceData = await this.gecko.getTokenPrice(toolInput.token, toolInput.network);
+                            evidence.evidence.price_data = priceData;
+                            if (priceData.price) {
+                                evidence.evidence.key_facts.push(`Price: $${priceData.price}`, `24h change: ${priceData.price_change_24h}%`);
+                            }
+                            break;
+                    }
+                }
+                catch (error) {
+                    logger.error(`Tool ${toolName} failed`, error);
+                }
+            }
+        }
+        // Update confidence based on evidence quality
+        if (evidence.evidence.key_facts.length > 3) {
+            evidence.confidence = 0.9;
+        }
+        return evidence;
+    }
+    /**
+     * Extract key facts from search results
+     */
+    extractKeyFacts(results) {
+        return results
+            .slice(0, 3)
+            .map(r => r.snippet || r.description)
+            .filter(Boolean);
+    }
+    /**
+     * Handle disambiguation
+     */
+    async handleDisambiguation(evidence) {
+        const text = await this.responseGenerator.generateDisambiguationResponse(evidence);
+        return {
+            text,
+            confidence: 0.5,
+            metadata: {
+                disambiguation: true,
+                candidates: evidence.candidates
+            }
+        };
+    }
+}
+/**
+ * Factory function
+ */
+export function createOrchestratorV2() {
+    return new ThropOrchestratorV2();
+}
+//# sourceMappingURL=orchestrator-v2.js.map

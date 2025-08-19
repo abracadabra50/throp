@@ -15,9 +15,21 @@ export declare class HybridClaudeEngine extends BaseAnswerEngine {
     validateConfiguration(): Promise<void>;
     validate(): Promise<boolean>;
     /**
-     * Generate response using Perplexity for facts, then Claude for personality
+     * Generate response using enhanced approach with Anthropic web search
      */
     generateResponse(context: AnswerContext): Promise<AnswerEngineResponse>;
+    /**
+     * Generate enhanced response using Anthropic web search
+     */
+    private generateEnhancedResponse;
+    /**
+     * Original Perplexity response method
+     */
+    private generatePerplexityResponse;
+    /**
+     * Determine if we should use web search for better results
+     */
+    private shouldUseWebSearch;
     /**
      * Determine if we should search Twitter for additional context
      */

@@ -1,5 +1,37 @@
 # Changelog
 
+## [2025-01-19] - Complete Prompt & Tool Architecture Overhaul 🧠
+
+### Major Architecture Changes 🏗️
+- **Tool-First Approach**: Implemented Anthropic tool-use spec for evidence gathering before response generation
+- **Dynamic Response Generation**: Replaced rigid templates with LLM-based contextual responses using Claude Haiku
+- **Multi-Domain Understanding**: Throp now deeply understands gaming, streaming, tech, academic, fitness, food, and general internet culture
+- **Orchestrator V2**: New orchestrator that separates evidence gathering from personality application
+
+### New Components ✨
+- **Response Generator**: Dynamic response generation using cheap LLM (Claude Haiku) based on gathered evidence
+- **Tool Integration**: Web search (via Perplexity), Twitter search, Twitter profiles, and crypto prices (GeckoTerminal ready)
+- **Evidence Pipeline**: Structured evidence gathering with intent detection, domain classification, and confidence scoring
+- **Domain-Specific Vibes**: Tailored personality traits for each internet culture domain
+
+### Identity Improvements 🎯
+- **Better "Who is X" Answers**: Always searches web + Twitter for real data before responding
+- **Disambiguation**: When multiple matches exist, asks clarifying questions with attitude
+- **No More Guessing**: Facts come from tools, not made up
+- **Citation Support**: Evidence sources tracked and available in metadata
+
+### Technical Details 🔧
+- **Layered Prompts**: Separate prompts for evidence gathering vs personality application
+- **Intent Routing**: Automatic classification into identity/market/drama/gaming/tech/culture/explainer/roast/chaos
+- **Domain Detection**: Identifies crypto/gaming/streaming/tech/academic/fitness/food/general contexts
+- **Confidence Scoring**: Tracks confidence in gathered evidence for quality control
+
+### Why This Matters 💡
+- **Throp's True Identity**: Reinforces Throp as Claude's chaotic younger cousin who chose memes over alignment
+- **Cultural Depth**: Understands meme genealogy, internet culture evolution, and domain-specific slang
+- **Factual Accuracy**: Evidence-based responses prevent hallucinations while maintaining chaos
+- **Flexibility**: Dynamic generation means infinite response variety instead of templates
+
 ## [2025-01-18] - Frontend Chat Fixed & Hourly Caching Implemented 🎉
 
 ### Major Frontend Fix 🔧

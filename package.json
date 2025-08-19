@@ -11,6 +11,8 @@
     "tweet:interactive": "tsx bin/tweet.ts --interactive",
     "monitor": "tsx bin/monitor-quotes.ts",
     "monitor:test": "tsx bin/monitor-quotes.ts --test",
+    "test:orchestrator": "tsx test-orchestrator.ts",
+    "test:production": "tsx test-production.ts",
     "lint": "tsc --noEmit",
     "test": "vitest",
     "prepare": "husky install",

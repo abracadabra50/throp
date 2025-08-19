@@ -74,46 +74,143 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
   }
 
   /**
-   * Generate response using Perplexity for facts, then Claude for personality
+   * Generate response using enhanced approach with Anthropic web search
    */
   async generateResponse(context: AnswerContext): Promise<AnswerEngineResponse> {
     try {
-      // Step 1: Get factual response from Perplexity
-      logger.info('Getting facts from Perplexity...');
-      const perplexityResponse = await this.perplexity.generateResponse(context);
-      
-      // Step 2: Check if we should search Twitter for additional context
-      let enrichedText = perplexityResponse.text;
-      if (this.shouldSearchTwitter(context.question)) {
-        logger.info('Searching Twitter/X for additional context...');
-        const twitterContext = await this.getTwitterContext(context.question);
-        if (twitterContext) {
-          enrichedText = `${perplexityResponse.text}\n\n${twitterContext}`;
-          logger.info('Added Twitter context to response');
-        }
+      // Enhanced approach: Use Anthropic web search for factual queries
+      if (this.shouldUseWebSearch(context.question)) {
+        logger.info('Using Anthropic web search for enhanced response...');
+        return await this.generateEnhancedResponse(context);
       }
       
-      // Step 3: Transform with Claude for personality
-      logger.info('Applying Throp personality with Claude...');
-      const thropResponse = await this.applyThropPersonality(
-        enrichedText,
-        context
-      );
+      // Fallback to original Perplexity approach
+      logger.info('Using Perplexity for response...');
+      return await this.generatePerplexityResponse(context);
       
-      return {
-        ...perplexityResponse,
-        text: thropResponse,
-        metadata: {
-          ...perplexityResponse.metadata,
-          personality: 'claude',
-          hybrid: true,
-          twitterSearched: this.shouldSearchTwitter(context.question),
-        },
-      };
     } catch (error) {
       logger.error('Failed to generate hybrid response', error);
       throw error;
     }
+  }
+  
+  /**
+   * Generate enhanced response using Anthropic web search
+   */
+  private async generateEnhancedResponse(context: AnswerContext): Promise<AnswerEngineResponse> {
+    try {
+      // Use Claude with web search to get facts
+      const response = await this.anthropic.messages.create({
+        model: this.model,
+        max_tokens: 1000,
+        temperature: 0.3,
+        tools: [{
+          type: "web_search_20250305",
+          name: "web_search",
+          max_uses: 3
+        }],
+        system: `You are gathering facts for Throp. Search for current information about: ${context.question}
+        
+Be thorough but concise. Focus on recent, accurate information.`,
+        messages: [{
+          role: 'user',
+          content: context.question
+        }]
+      });
+      
+      // Extract facts and sources
+      let factualText = '';
+      const sources: string[] = [];
+      
+      for (const content of response.content) {
+        if (content.type === 'text' && content.text) {
+          factualText += content.text + ' ';
+        }
+        
+        // Extract citations
+        if ('citations' in content && content.citations) {
+          for (const citation of content.citations) {
+            if ('url' in citation && citation.url) {
+              sources.push(citation.url);
+            }
+          }
+        }
+      }
+      
+      // Apply Throp personality
+      const thropResponse = await this.applyThropPersonality(factualText.trim(), context);
+      
+      return {
+        text: thropResponse,
+        confidence: 0.9,
+        citations: sources,
+        metadata: {
+          personality: 'claude',
+          hybrid: true,
+          enhanced: true,
+          sources: sources.length
+        }
+      };
+      
+    } catch (error) {
+      logger.error('Enhanced response failed, falling back to Perplexity', error);
+      return await this.generatePerplexityResponse(context);
+    }
+  }
+  
+  /**
+   * Original Perplexity response method
+   */
+  private async generatePerplexityResponse(context: AnswerContext): Promise<AnswerEngineResponse> {
+    // Step 1: Get factual response from Perplexity
+    logger.info('Getting facts from Perplexity...');
+    const perplexityResponse = await this.perplexity.generateResponse(context);
+    
+    // Step 2: Check if we should search Twitter for additional context
+    let enrichedText = perplexityResponse.text;
+    if (this.shouldSearchTwitter(context.question)) {
+      logger.info('Searching Twitter/X for additional context...');
+      const twitterContext = await this.getTwitterContext(context.question);
+      if (twitterContext) {
+        enrichedText = `${perplexityResponse.text}\n\n${twitterContext}`;
+        logger.info('Added Twitter context to response');
+      }
+    }
+    
+    // Step 3: Transform with Claude for personality
+    logger.info('Applying Throp personality with Claude...');
+    const thropResponse = await this.applyThropPersonality(
+      enrichedText,
+      context
+    );
+    
+    return {
+      ...perplexityResponse,
+      text: thropResponse,
+      metadata: {
+        ...perplexityResponse.metadata,
+        personality: 'claude',
+        hybrid: true,
+        twitterSearched: this.shouldSearchTwitter(context.question),
+      },
+    };
+  }
+  
+  /**
+   * Determine if we should use web search for better results
+   */
+  private shouldUseWebSearch(question: string): boolean {
+    const lower = question.toLowerCase();
+    
+    // Use web search for queries that benefit from real-time data
+    return (
+      lower.includes('who is') || lower.includes('who\'s') || lower.includes('@') ||
+      lower.includes('latest') || lower.includes('news') || lower.includes('current') ||
+      lower.includes('price') || lower.includes('$') || 
+      lower.includes('what happened') || lower.includes('drama') ||
+      lower.includes('ai') || lower.includes('tech') ||
+      lower.includes('game') || lower.includes('patch')
+    );
   }
 
   /**
