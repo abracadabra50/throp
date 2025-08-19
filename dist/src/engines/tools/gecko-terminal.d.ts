@@ -1,67 +1,24 @@
 /**
- * GeckoTerminal Tool - Real-time DEX prices and market data
- * Uses free GeckoTerminal API for on-chain data
- * Reference: https://apiguide.geckoterminal.com/
+ * GeckoTerminal API tool for crypto price data
+ * Free API with no authentication required
  */
-export interface TokenPriceData {
+export interface CryptoPriceData {
+    symbol: string;
     price: number;
-    price_change_24h: number;
-    volume_24h: number;
-    liquidity: number;
-    market_cap?: number;
-    chart_url: string;
-    pool_address?: string;
-    token_address?: string;
-}
-export interface ChartAnalysis {
-    trend: 'bullish' | 'bearish' | 'neutral';
-    support: number;
-    resistance: number;
-    verdict: string;
+    change24h: number;
+    volume24h: number;
+    marketCap?: number;
+    timestamp: Date;
 }
 export declare class GeckoTerminalTool {
     private baseUrl;
-    private cache;
-    private cacheTimeout;
     /**
-     * Get token price and market data
+     * Get price data for a cryptocurrency
      */
-    getTokenPrice(token: string, network?: string): Promise<TokenPriceData>;
+    getPrice(symbol: string): Promise<CryptoPriceData | null>;
     /**
-     * Search for token pools
+     * Format price data for response
      */
-    private searchPools;
-    /**
-     * Extract price data from pool response
-     */
-    private extractPriceData;
-    /**
-     * Get OHLCV data for chart analysis
-     */
-    getOHLCV(poolAddress: string, timeframe?: string): Promise<any>;
-    /**
-     * Analyze chart data
-     */
-    analyzeChart(token: string, network?: string): Promise<ChartAnalysis>;
-    /**
-     * Perform basic technical analysis
-     */
-    private performTechnicalAnalysis;
-    /**
-     * Check if string looks like a token address
-     */
-    private looksLikeAddress;
-    /**
-     * Get from cache
-     */
-    private getFromCache;
-    /**
-     * Set cache
-     */
-    private setCache;
-    /**
-     * Get empty price data for when token not found
-     */
-    private getEmptyPriceData;
+    formatPriceData(data: CryptoPriceData): string;
 }
 //# sourceMappingURL=gecko-terminal.d.ts.map

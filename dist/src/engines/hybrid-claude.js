@@ -160,15 +160,20 @@ Be thorough but concise. Focus on recent, accurate information.`,
         // Step 3: Transform with Claude for personality
         logger.info('Applying Throp personality with Claude...');
         const thropResponse = await this.applyThropPersonality(enrichedText, context);
+        // Don't return threadParts for web chat - only for Twitter
         return {
-            ...perplexityResponse,
             text: thropResponse,
+            confidence: perplexityResponse.confidence,
+            citations: perplexityResponse.citations,
             metadata: {
                 ...perplexityResponse.metadata,
                 personality: 'claude',
                 hybrid: true,
                 twitterSearched: this.shouldSearchTwitter(context.question),
             },
+            // Only include threading for Twitter, not web chat
+            shouldThread: false,
+            threadParts: undefined,
         };
     }
     /**

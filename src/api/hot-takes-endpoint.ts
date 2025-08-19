@@ -62,15 +62,17 @@ async function fetchSpecificTrends(): Promise<any[]> {
     const engine = createHybridClaudeEngine();
     const context = getCurrentContext();
     
-    // Ask for VERY specific current events
+    // Ask for VERY specific current events with better prompts
     const prompts = [
-      `What specific celebrity drama or scandal is happening on Twitter/X today ${context.dateStr}? Name the actual people involved.`,
-      `What specific tech company made news today? Include the company name and what they did.`,
-      `What specific sports game or match result is trending right now? Include team names and score if available.`,
-      `What specific political event or statement happened in the last 24 hours? Include names.`,
-      `What viral video or meme is everyone talking about today specifically?`,
-      `What specific AI or tech announcement happened this week? Include company names.`,
-      `What specific market or crypto event is trending? Include specific coins or stocks.`
+      `What is the #1 trending topic on Twitter/X right now on ${context.dateStr}? Give me the exact hashtag or person's name that's trending.`,
+      `What major tech company (Google, Apple, Microsoft, OpenAI, Meta, etc) made headlines in the last 24 hours? What exactly did they announce or do?`,
+      `What sports team won or lost today ${context.dateStr}? Give me the exact teams and final score.`,
+      `What politician or celebrity said something controversial on social media in the last 24 hours? Quote their exact words.`,
+      `What TikTok trend or viral video has over 1 million views today? Describe the specific trend.`,
+      `What cryptocurrency is up or down more than 10% today? Give me the exact coin name and percentage.`,
+      `What major company's stock moved significantly today? Name the company and what happened.`,
+      `What new AI tool or feature was announced this week? Name the specific product.`,
+      `What streaming show or movie is everyone talking about today? Give the exact title.`
     ];
     
     // Randomly pick 4-6 prompts to vary the topics each hour

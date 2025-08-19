@@ -2,28 +2,21 @@
  * Throp Orchestrator - Production version using Anthropic's web search tool
  * Integrates with existing Twitter credentials and GeckoTerminal free API
  */
-import type { AnswerContext, AnswerEngineResponse } from '../types.js';
+import type { AnswerEngineResponse } from '../types.js';
 /**
- * Evidence gathered from tools
+ * Evidence structure for orchestrator
  */
 export interface Evidence {
-    intent: 'identity' | 'market' | 'drama' | 'gaming' | 'tech' | 'culture' | 'explainer' | 'roast' | 'pure_chaos';
-    query: string;
-    domain: 'crypto' | 'gaming' | 'streaming' | 'tech' | 'academic' | 'fitness' | 'food' | 'general';
-    evidence: {
-        web_results?: any[];
-        twitter_data?: any;
-        price_data?: any;
-        key_facts: string[];
-        sources: string[];
-    };
+    intent: string;
+    domain: string;
     confidence: number;
     needs_disambiguation: boolean;
-    candidates?: Array<{
-        name: string;
-        desc: string;
-        context: string;
-    }>;
+    disambiguation_options?: string[];
+    evidence: {
+        key_facts: string[];
+        sources: string[];
+        context: Record<string, any>;
+    };
 }
 /**
  * Production orchestrator using real APIs
@@ -39,47 +32,27 @@ export declare class ThropProductionOrchestrator {
     /**
      * Main processing pipeline
      */
-    process(input: string, context?: AnswerContext): Promise<AnswerEngineResponse>;
+    process(input: string, context?: any): Promise<AnswerEngineResponse>;
     /**
-     * Gather evidence using Claude with built-in web search and existing APIs
+     * Gather evidence using Claude with tools
      */
     private gatherEvidence;
     /**
-     * Analyze query to determine intent and domain
+     * Parse evidence from Claude's response
      */
-    private analyzeQuery;
+    private parseEvidence;
     /**
-     * Gather identity evidence using web search + Twitter
+     * Get fallback evidence when parsing fails
      */
-    private gatherIdentityEvidence;
+    private getFallbackEvidence;
     /**
-     * Gather crypto evidence using GeckoTerminal + web search
+     * Handle disambiguation when multiple matches found
      */
-    private gatherCryptoEvidence;
+    private handleDisambiguation;
     /**
-     * Gather current events evidence using web search + Twitter
+     * Get tool definitions for Claude
      */
-    private gatherCurrentEvidence;
-    /**
-     * Gather web evidence using Anthropic's web search
-     */
-    private gatherWebEvidence;
-    /**
-     * Search web using Anthropic's built-in web search tool
-     */
-    private searchWeb;
-    /**
-     * Search Twitter using existing credentials
-     */
-    private searchTwitter;
-    /**
-     * Search Twitter profile using existing credentials
-     */
-    private searchTwitterProfile;
-    /**
-     * Get crypto price using GeckoTerminal free API
-     */
-    private getCryptoPrice;
+    private getToolDefinitions;
 }
 /**
  * Factory function

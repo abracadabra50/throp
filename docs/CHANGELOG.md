@@ -1,5 +1,31 @@
 # Changelog
 
+## [2025-08-19] - Backend Improvements & Fixes
+
+### Fixed
+- **Chat Responses**: Attempted to remove [1/5] thread numbering from responses (still showing - needs further investigation)
+- **Backend Deployment**: Successfully deployed backend using Google Cloud Secret Manager for secure API key storage
+- **Environment Variables**: Fixed deployment conflicts between secrets and environment variables
+
+### Changed
+- **Trending Prompts**: Updated from generic placeholders to current, topical prompts including:
+  - OpenAI board drama
+  - TikTok ban situation
+  - Luigi Mangione references
+  - Microsoft/Activision deal
+  - 2025 Spotify Wrapped
+  - Current memes and slang
+- **Hot Takes**: Enhanced Perplexity prompts to fetch more specific trending topics (still defaulting to fallback - needs API investigation)
+
+### Added
+- **Secret Manager Integration**: All API keys now stored securely in Google Cloud Secret Manager
+- **Deployment Script**: Created `setup-secrets-and-deploy.sh` for automated deployment with secrets
+
+### Technical Notes
+- The [1/5] format comes from `formatForTwitter` method in `base.ts` when responses exceed 280 characters
+- Hot takes are falling back to generic responses, suggesting Perplexity API may not be returning specific trends
+- Frontend at https://throp.ai is now connected to backend at https://throp-bot-947985992378.us-central1.run.app
+
 ## [2025-01-19] - Complete Prompt & Tool Architecture Overhaul 🧠
 
 ### Major Architecture Changes 🏗️

@@ -49,19 +49,24 @@ export class ThropProductionOrchestrator {
             logger.info('Evidence gathered', {
                 intent: evidence.intent,
                 domain: evidence.domain,
-                facts: evidence.evidence.key_facts.length,
-                confidence: evidence.confidence
+                confidence: evidence.confidence,
+                facts: evidence.evidence.key_facts.length
             });
-            // Step 2: Generate response using evidence
+            // Step 2: Handle disambiguation if needed
+            if (evidence.needs_disambiguation) {
+                return this.handleDisambiguation(evidence);
+            }
+            // Step 3: Generate dynamic response
             const response = await this.responseGenerator.generateResponse(evidence);
             return {
                 text: response,
                 confidence: evidence.confidence,
+                citations: evidence.evidence.sources,
                 metadata: {
                     intent: evidence.intent,
                     domain: evidence.domain,
                     sources: evidence.evidence.sources,
-                    tool_calls: evidence.evidence.key_facts.length > 0 ? 'used' : 'none'
+                    orchestrator: 'production'
                 }
             };
         }
@@ -70,293 +75,217 @@ export class ThropProductionOrchestrator {
             return {
                 text: "skill issue on my end... try again or touch grass idk",
                 confidence: 0.1,
-                metadata: { error: true }
+                metadata: { error: true, orchestrator: 'production' }
             };
         }
     }
     /**
-     * Gather evidence using Claude with built-in web search and existing APIs
+     * Gather evidence using Claude with tools
      */
     async gatherEvidence(input) {
-        // Step 1: Analyze query intent
-        const { intent, domain, needsTools } = this.analyzeQuery(input);
-        const evidence = {
-            intent,
-            domain,
-            query: input,
-            evidence: {
-                key_facts: [],
-                sources: []
-            },
-            confidence: 0.7,
-            needs_disambiguation: false
-        };
-        // Step 2: If we don't need tools, return early
-        if (!needsTools || intent === 'pure_chaos') {
-            evidence.confidence = 0.8;
-            return evidence;
-        }
-        // Step 3: Gather evidence based on intent and domain
+        const tools = this.getToolDefinitions();
+        const systemPrompt = `You are an evidence gatherer for Throp. Analyze the input and gather relevant evidence using available tools.
+
+PROCESS:
+1. Classify the intent (identity, crypto_price, tech_news, drama, gaming, general)
+2. Classify the domain (crypto, tech, gaming, streaming, academic, fitness, food, general)
+3. Use tools to gather evidence
+4. Return structured evidence
+
+INTENTS:
+- identity: "who is X", "@username", person queries
+- crypto_price: "$TOKEN", "price of X", "how is bitcoin"
+- tech_news: "what did X announce", "latest tech"
+- drama: "drama", "tea", "beef", "controversy"
+- gaming: "game", "patch", "esports"
+- general: everything else
+
+DOMAINS:
+- crypto: cryptocurrency, DeFi, NFTs
+- tech: AI, startups, big tech companies
+- gaming: video games, esports, streamers
+- streaming: Twitch, YouTube creators
+- academic: science, research, education
+- fitness: health, gym, sports
+- food: cooking, restaurants, nutrition
+- general: everything else
+
+Return evidence in this format:
+{
+  "intent": "category",
+  "domain": "category", 
+  "confidence": 0.8,
+  "needs_disambiguation": false,
+  "evidence": {
+    "key_facts": ["fact1", "fact2"],
+    "sources": ["url1", "url2"],
+    "context": {}
+  }
+}`;
         try {
-            switch (intent) {
-                case 'identity':
-                    await this.gatherIdentityEvidence(input, evidence);
-                    break;
-                case 'market':
-                    if (domain === 'crypto') {
-                        await this.gatherCryptoEvidence(input, evidence);
-                    }
-                    else {
-                        await this.gatherWebEvidence(input, evidence);
-                    }
-                    break;
-                case 'drama':
-                case 'gaming':
-                case 'tech':
-                case 'culture':
-                    await this.gatherCurrentEvidence(input, evidence);
-                    break;
-                case 'explainer':
-                    await this.gatherWebEvidence(input, evidence);
-                    break;
-                default:
-                    // For other intents, just use web search
-                    await this.gatherWebEvidence(input, evidence);
+            const response = await this.anthropic.messages.create({
+                model: this.model,
+                max_tokens: 2000,
+                temperature: 0.3,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: input }],
+                tools
+            });
+            // Parse response and extract evidence
+            let evidenceText = '';
+            const sources = [];
+            for (const content of response.content) {
+                if (content.type === 'text') {
+                    evidenceText += content.text + '\n';
+                }
+                else if (content.type === 'tool_use') {
+                    // Handle tool results
+                    logger.info(`Tool used: ${content.name}`);
+                }
             }
-            // Update confidence based on evidence quality
-            if (evidence.evidence.key_facts.length > 2) {
-                evidence.confidence = 0.9;
-            }
-            else if (evidence.evidence.key_facts.length > 0) {
-                evidence.confidence = 0.8;
-            }
+            // Try to parse structured evidence from response
+            const evidence = this.parseEvidence(evidenceText, input);
+            return evidence;
         }
         catch (error) {
             logger.error('Evidence gathering failed', error);
+            return this.getFallbackEvidence(input);
         }
-        return evidence;
     }
     /**
-     * Analyze query to determine intent and domain
+     * Parse evidence from Claude's response
      */
-    analyzeQuery(query) {
-        const lower = query.toLowerCase();
-        // Identity detection
-        if (lower.includes('who is') || lower.includes('who\'s') || lower.includes('@')) {
-            return {
-                intent: 'identity',
-                domain: lower.includes('crypto') || lower.includes('token') || lower.includes('defi') ? 'crypto' : 'general',
-                needsTools: true
-            };
+    parseEvidence(text, input) {
+        try {
+            // Try to find JSON in the response
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                return {
+                    intent: parsed.intent || 'general',
+                    domain: parsed.domain || 'general',
+                    confidence: parsed.confidence || 0.7,
+                    needs_disambiguation: parsed.needs_disambiguation || false,
+                    evidence: {
+                        key_facts: parsed.evidence?.key_facts || [text.substring(0, 200)],
+                        sources: parsed.evidence?.sources || [],
+                        context: parsed.evidence?.context || {}
+                    }
+                };
+            }
         }
-        // Crypto market detection
-        if (lower.includes('price') || lower.includes('$') ||
-            lower.includes('bitcoin') || lower.includes('eth') || lower.includes('sol') ||
-            lower.includes('token') || lower.includes('coin') || lower.includes('crypto')) {
-            return {
-                intent: 'market',
-                domain: 'crypto',
-                needsTools: true
-            };
+        catch (error) {
+            logger.warn('Failed to parse structured evidence', error);
         }
-        // Gaming detection
-        if (lower.includes('game') || lower.includes('fortnite') || lower.includes('valorant') ||
-            lower.includes('patch') || lower.includes('esports') || lower.includes('steam')) {
-            return {
-                intent: 'gaming',
-                domain: 'gaming',
-                needsTools: true
-            };
+        // Fallback to basic analysis
+        return this.getFallbackEvidence(input, text);
+    }
+    /**
+     * Get fallback evidence when parsing fails
+     */
+    getFallbackEvidence(input, text) {
+        const lower = input.toLowerCase();
+        let intent = 'general';
+        let domain = 'general';
+        // Basic intent detection
+        if (lower.includes('who is') || lower.includes('@') || lower.includes('who\'s')) {
+            intent = 'identity';
         }
-        // Tech detection
-        if (lower.includes('ai') || lower.includes('openai') || lower.includes('tech') ||
-            lower.includes('javascript') || lower.includes('programming') || lower.includes('app')) {
-            return {
-                intent: 'tech',
-                domain: 'tech',
-                needsTools: true
-            };
+        else if (lower.includes('$') || lower.includes('price') || lower.includes('bitcoin') || lower.includes('crypto')) {
+            intent = 'crypto_price';
+            domain = 'crypto';
         }
-        // Drama detection
-        if (lower.includes('drama') || lower.includes('latest') || lower.includes('happening') ||
-            lower.includes('tea') || lower.includes('twitter') || lower.includes('discourse')) {
-            return {
-                intent: 'drama',
-                domain: 'general',
-                needsTools: true
-            };
+        else if (lower.includes('drama') || lower.includes('tea') || lower.includes('beef')) {
+            intent = 'drama';
         }
-        // Explainer detection
-        if (lower.includes('what is') || lower.includes('how does') || lower.includes('explain') ||
-            lower.includes('why') || lower.includes('how to')) {
-            return {
-                intent: 'explainer',
-                domain: 'general',
-                needsTools: true
-            };
+        else if (lower.includes('game') || lower.includes('patch') || lower.includes('esports')) {
+            intent = 'gaming';
+            domain = 'gaming';
         }
-        // Default to chaos
+        else if (lower.includes('ai') || lower.includes('tech') || lower.includes('openai')) {
+            intent = 'tech_news';
+            domain = 'tech';
+        }
         return {
-            intent: 'pure_chaos',
-            domain: 'general',
-            needsTools: false
+            intent,
+            domain,
+            confidence: 0.6,
+            needs_disambiguation: false,
+            evidence: {
+                key_facts: text ? [text.substring(0, 200)] : [`Query about: ${input}`],
+                sources: [],
+                context: { fallback: true }
+            }
         };
     }
     /**
-     * Gather identity evidence using web search + Twitter
+     * Handle disambiguation when multiple matches found
      */
-    async gatherIdentityEvidence(query, evidence) {
-        const promises = [];
-        // Extract handle if present
-        const handleMatch = query.match(/@(\w+)/);
-        const handle = handleMatch ? handleMatch[1] : null;
-        // Web search for general info
-        promises.push(this.searchWeb(query, evidence));
-        // Twitter search for profile/tweets
-        if (handle) {
-            promises.push(this.searchTwitterProfile(handle, evidence));
-        }
-        else {
-            promises.push(this.searchTwitter(query, evidence));
-        }
-        // Execute searches in parallel
-        await Promise.all(promises);
+    handleDisambiguation(evidence) {
+        const options = evidence.disambiguation_options || [];
+        const optionsList = options.slice(0, 3).map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+        return {
+            text: `multiple matches found, which one?\n\n${optionsList}\n\nbe more specific next time bestie`,
+            confidence: 0.8,
+            metadata: {
+                intent: evidence.intent,
+                domain: evidence.domain,
+                disambiguation: true,
+                orchestrator: 'production'
+            }
+        };
     }
     /**
-     * Gather crypto evidence using GeckoTerminal + web search
+     * Get tool definitions for Claude
      */
-    async gatherCryptoEvidence(query, evidence) {
-        const promises = [];
-        // Extract token symbol
-        const tokenMatch = query.match(/\$?([A-Z]{2,10})\b/i) || query.match(/\b(bitcoin|ethereum|solana|cardano|polygon)\b/i);
-        const token = tokenMatch ? tokenMatch[1] : null;
-        if (token) {
-            // Get price data from GeckoTerminal
-            promises.push(this.getCryptoPrice(token, evidence));
-        }
-        // Web search for context
-        promises.push(this.searchWeb(query, evidence));
-        await Promise.all(promises);
-    }
-    /**
-     * Gather current events evidence using web search + Twitter
-     */
-    async gatherCurrentEvidence(query, evidence) {
-        const promises = [
-            this.searchWeb(query, evidence),
-            this.searchTwitter(query, evidence)
-        ];
-        await Promise.all(promises);
-    }
-    /**
-     * Gather web evidence using Anthropic's web search
-     */
-    async gatherWebEvidence(query, evidence) {
-        await this.searchWeb(query, evidence);
-    }
-    /**
-     * Search web using Anthropic's built-in web search tool
-     */
-    async searchWeb(query, evidence) {
-        try {
-            logger.info('Searching web', { query });
-            const response = await this.anthropic.messages.create({
-                model: this.model,
-                max_tokens: 1000,
-                temperature: 0.3,
-                tools: [{
-                        type: "web_search_20250305",
-                        name: "web_search",
-                        max_uses: 3
-                    }],
-                messages: [{
-                        role: 'user',
-                        content: `Search for information about: ${query}`
-                    }]
-            });
-            // Extract web search results and facts
-            for (const content of response.content) {
-                if (content.type === 'text' && content.text) {
-                    // Extract key facts from the response
-                    const sentences = content.text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-                    evidence.evidence.key_facts.push(...sentences.slice(0, 3).map(s => s.trim()));
-                }
-                // Extract citations if available
-                if ('citations' in content && content.citations) {
-                    for (const citation of content.citations) {
-                        if ('url' in citation && citation.url) {
-                            evidence.evidence.sources.push(citation.url);
+    getToolDefinitions() {
+        const tools = [];
+        // Web search tool (built into Claude)
+        tools.push({
+            type: "web_search_20250305",
+            name: "web_search",
+            max_uses: 3
+        });
+        // Twitter search tool (if available)
+        if (this.twitterClient) {
+            tools.push({
+                type: "function",
+                name: "search_twitter",
+                description: "Search Twitter/X for recent posts about a topic",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        query: {
+                            type: "string",
+                            description: "Search query for Twitter"
+                        },
+                        limit: {
+                            type: "number",
+                            description: "Number of tweets to return (max 10)",
+                            default: 5
                         }
-                    }
+                    },
+                    required: ["query"]
                 }
-            }
-            logger.info('Web search complete', {
-                facts: evidence.evidence.key_facts.length,
-                sources: evidence.evidence.sources.length
             });
         }
-        catch (error) {
-            logger.error('Web search failed', error);
-        }
-    }
-    /**
-     * Search Twitter using existing credentials
-     */
-    async searchTwitter(query, evidence) {
-        try {
-            logger.info('Searching Twitter', { query });
-            const results = await this.twitterSearch.searchTweets(query, 5);
-            if (results && results.tweets.length > 0) {
-                evidence.evidence.twitter_data = { tweets: results };
-                // Add top tweet as key fact
-                const topTweet = results.tweets[0];
-                evidence.evidence.key_facts.push(`Twitter: "${topTweet.text.substring(0, 100)}..." - @${topTweet.author}`);
-                logger.info('Twitter search complete', { found: results.count });
+        // Crypto price tool
+        tools.push({
+            type: "function",
+            name: "get_crypto_price",
+            description: "Get current cryptocurrency price and market data",
+            parameters: {
+                type: "object",
+                properties: {
+                    symbol: {
+                        type: "string",
+                        description: "Cryptocurrency symbol (e.g., BTC, ETH, SOL)"
+                    }
+                },
+                required: ["symbol"]
             }
-        }
-        catch (error) {
-            logger.error('Twitter search failed', error);
-        }
-    }
-    /**
-     * Search Twitter profile using existing credentials
-     */
-    async searchTwitterProfile(handle, evidence) {
-        try {
-            logger.info('Getting Twitter profile', { handle });
-            if (!this.twitterClient) {
-                return;
-            }
-            // Search for user tweets first
-            const tweets = await this.twitterSearch.searchTweets(`from:${handle}`, 3);
-            if (tweets && tweets.tweets.length > 0) {
-                const tweet = tweets.tweets[0];
-                evidence.evidence.twitter_data = { profile: { username: handle, tweets } };
-                evidence.evidence.key_facts.push(`@${handle} on Twitter`, `Recent tweet: "${tweet.text.substring(0, 100)}..."`);
-            }
-            logger.info('Twitter profile search complete', { handle });
-        }
-        catch (error) {
-            logger.error('Twitter profile search failed', error);
-        }
-    }
-    /**
-     * Get crypto price using GeckoTerminal free API
-     */
-    async getCryptoPrice(token, evidence) {
-        try {
-            logger.info('Getting crypto price', { token });
-            const priceData = await this.gecko.getTokenPrice(token);
-            if (priceData.price > 0) {
-                evidence.evidence.price_data = priceData;
-                evidence.evidence.key_facts.push(`${token.toUpperCase()} price: $${priceData.price}`, `24h change: ${priceData.price_change_24h > 0 ? '+' : ''}${priceData.price_change_24h.toFixed(2)}%`, `Volume: $${priceData.volume_24h.toLocaleString()}`);
-                evidence.evidence.sources.push(priceData.chart_url);
-                logger.info('Crypto price fetched', { token, price: priceData.price });
-            }
-        }
-        catch (error) {
-            logger.error('Crypto price fetch failed', error);
-        }
+        });
+        return tools;
     }
 }
 /**

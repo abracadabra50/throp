@@ -1,42 +1,26 @@
 /**
- * Dynamic Response Generator using LLM for contextual, funny responses
- * No templates, just pure chaos generation based on evidence
+ * Response Generator - Creates dynamic responses based on evidence
+ * Uses Claude Haiku for cost-effective personality application
  */
-import type { Evidence } from './orchestrator.js';
+import type { Evidence } from './orchestrator-production.js';
+/**
+ * Generates contextual responses using evidence
+ */
 export declare class ResponseGenerator {
     private anthropic;
+    private model;
     constructor();
     /**
-     * Generate a response using Claude Haiku (cheap and fast) based on evidence
+     * Generate response based on evidence
      */
     generateResponse(evidence: Evidence): Promise<string>;
     /**
-     * Build the system prompt based on intent and domain
-     */
-    private getSystemPrompt;
-    /**
-     * Get domain-specific personality traits
+     * Get domain-specific vibes
      */
     private getDomainVibes;
     /**
-     * Build contextual prompt with evidence
+     * Get intent-specific handling
      */
-    private buildContextualPrompt;
-    /**
-     * Ensure response has proper chaos formatting
-     */
-    private ensureChaosFormatting;
-    /**
-     * Fallback responses when LLM fails
-     */
-    private getFallbackResponse;
-    /**
-     * Generate a disambiguation response
-     */
-    generateDisambiguationResponse(evidence: Evidence): Promise<string>;
+    private getIntentHandler;
 }
-/**
- * Factory function
- */
-export declare function createResponseGenerator(): ResponseGenerator;
 //# sourceMappingURL=response-generator.d.ts.map
