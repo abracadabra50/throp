@@ -164,9 +164,15 @@ Be thorough but concise. Focus on recent, accurate information.`,
         // Step 3: Transform with Claude for personality
         logger.info('Applying Throp personality with Claude...');
         const thropResponse = await this.applyThropPersonality(enrichedText, context);
+        // Clean up thread formatting for web responses
+        const cleanResponse = thropResponse
+            .replace(/\[\d+\/\d+\]/g, '') // Remove thread numbers like [1/5]
+            .replace(/^\d+\/\s*/, '') // Remove leading numbers like "1/ "
+            .replace(/\/thread$|fin$/, '') // Remove thread endings
+            .trim();
         // Don't return threadParts for web chat - only for Twitter
         return {
-            text: thropResponse,
+            text: cleanResponse,
             confidence: perplexityResponse.confidence,
             citations: perplexityResponse.citations,
             metadata: {

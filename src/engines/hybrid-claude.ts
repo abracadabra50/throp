@@ -189,21 +189,28 @@ Be thorough but concise. Focus on recent, accurate information.`,
       context
     );
     
-    // Don't return threadParts for web chat - only for Twitter
-    return {
-      text: thropResponse,
-      confidence: perplexityResponse.confidence,
-      citations: perplexityResponse.citations,
-      metadata: {
-        ...perplexityResponse.metadata,
-        personality: 'claude',
-        hybrid: true,
-        twitterSearched: this.shouldSearchTwitter(context.question),
-      },
-      // Only include threading for Twitter, not web chat
-      shouldThread: false,
-      threadParts: undefined,
-    };
+          // Clean up thread formatting for web responses
+      const cleanResponse = thropResponse
+        .replace(/\[\d+\/\d+\]/g, '') // Remove thread numbers like [1/5]
+        .replace(/^\d+\/\s*/, '') // Remove leading numbers like "1/ "
+        .replace(/\/thread$|fin$/, '') // Remove thread endings
+        .trim();
+
+      // Don't return threadParts for web chat - only for Twitter
+      return {
+        text: cleanResponse,
+        confidence: perplexityResponse.confidence,
+        citations: perplexityResponse.citations,
+        metadata: {
+          ...perplexityResponse.metadata,
+          personality: 'claude',
+          hybrid: true,
+          twitterSearched: this.shouldSearchTwitter(context.question),
+        },
+        // Only include threading for Twitter, not web chat
+        shouldThread: false,
+        threadParts: undefined,
+      };
   }
   
   /**
