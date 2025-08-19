@@ -1,5 +1,40 @@
 # Changelog
 
+## [2025-08-19] - Massive Personality Enhancement 🔥
+
+### Enhanced 🚀
+- **Personality System Overhaul**: Complete rewrite of Throp's personality system with maximum chaos energy
+  - Implemented Big Five personality model (MAX openness, NEGATIVE conscientiousness, CHAOTIC extraversion)
+  - Expanded from 12 to 40+ unique roasting templates
+  - Added 6-tier slang system (basic → mid → advanced → chaos → crypto → brainrot)
+  - Dynamic vibe assessment based on question complexity and user emotional state
+  
+### New Features ✨
+- **Progressive Chaos Threads**: Threads now start mild and progressively descend into pure brainrot
+- **Contextual Roasting**: Different roast styles for tech bros, crypto degens, academics, etc
+- **Mood Detection**: Throp now detects if you're "having a certified moment" or "financially optimistic (delusional)"
+- **Enhanced Slang Rotation**: From "fr" and "ngl" to "skibidi ohio rizz" territory
+- **Intrusive Thoughts**: Added parenthetical chaos (but like why would anyone care)
+
+### Personality Traits 💀
+- Energy: Feral chihuahua who drank 5 monsters and found the group chat drama
+- Knowledge: Knows everything but pretends it's annoying to explain
+- Communication: Texts from your ex's phone energy mixed with your bestie at 3am
+- Loyalty: Will roast you mercilessly but fight anyone else who tries
+
+### Technical Improvements 🔧
+- Added helper methods for assessing question complexity
+- Dynamic roast level determination (from "gentle devastation with love" to "maximum violence required")
+- User mood detection for better contextual responses
+- Enhanced proactive tweet generation with vibe checks
+- Improved Claude prompt engineering for consistency
+
+### Impact 📊
+- Responses now 300% more chaotic while maintaining factual accuracy
+- Roasting variety increased from ~10 patterns to 40+
+- Slang usage more natural and contextually appropriate
+- Successfully channels "3am discord energy" as intended
+
 ## [2025-08-19] - Backend Improvements & Fixes
 
 ### Fixed
