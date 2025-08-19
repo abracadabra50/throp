@@ -140,8 +140,11 @@ Be thorough but concise. Focus on recent, accurate information.`,
       // Apply Throp personality
       const thropResponse = await this.applyThropPersonality(factualText.trim(), context);
       
+      // Clean up any thread formatting for web responses
+      const cleanResponse = thropResponse.replace(/\[\d+\/\d+\]/g, '').trim();
+      
       return {
-        text: thropResponse,
+        text: cleanResponse,
         confidence: 0.9,
         citations: sources,
         metadata: {
@@ -149,7 +152,9 @@ Be thorough but concise. Focus on recent, accurate information.`,
           hybrid: true,
           enhanced: true,
           sources: sources.length
-        }
+        },
+        shouldThread: false,
+        threadParts: undefined
       };
       
     } catch (error) {

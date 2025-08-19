@@ -3,7 +3,6 @@
  * Now with hourly Redis caching for fresh content and cost optimization
  */
 import { logger } from '../utils/logger.js';
-import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
 import { getRedisCache } from '../cache/redis.js';
 import Anthropic from '@anthropic-ai/sdk';
 // Hourly cache duration for fresh content with cost optimization
@@ -20,86 +19,14 @@ function getCurrentHourCacheKey() {
 /**
  * Get current date context for more specific queries
  */
-function getCurrentContext() {
-    const now = new Date();
-    const options = {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit'
-    };
-    return {
-        dateStr: now.toLocaleDateString('en-US', options),
-        hour: now.getHours(),
-        isWeekend: now.getDay() === 0 || now.getDay() === 6,
-        month: now.toLocaleDateString('en-US', { month: 'long' }),
-        year: now.getFullYear()
-    };
-}
 /**
  * Fetch SPECIFIC trending topics using Perplexity (only called once per hour)
  */
 async function fetchSpecificTrends() {
     try {
-        const engine = createHybridClaudeEngine();
-        const context = getCurrentContext();
-        // Ask for VERY specific current events with better prompts
-        const prompts = [
-            `What is the #1 trending topic on Twitter/X right now on ${context.dateStr}? Give me the exact hashtag or person's name that's trending.`,
-            `What major tech company (Google, Apple, Microsoft, OpenAI, Meta, etc) made headlines in the last 24 hours? What exactly did they announce or do?`,
-            `What sports team won or lost today ${context.dateStr}? Give me the exact teams and final score.`,
-            `What politician or celebrity said something controversial on social media in the last 24 hours? Quote their exact words.`,
-            `What TikTok trend or viral video has over 1 million views today? Describe the specific trend.`,
-            `What cryptocurrency is up or down more than 10% today? Give me the exact coin name and percentage.`,
-            `What major company's stock moved significantly today? Name the company and what happened.`,
-            `What new AI tool or feature was announced this week? Name the specific product.`,
-            `What streaming show or movie is everyone talking about today? Give the exact title.`
-        ];
-        // Randomly pick 4-6 prompts to vary the topics each hour
-        const selectedPrompts = prompts
-            .sort(() => Math.random() - 0.5)
-            .slice(0, Math.floor(Math.random() * 3) + 4); // 4-6 prompts
-        const topics = [];
-        for (const prompt of selectedPrompts) {
-            try {
-                const response = await engine.generateResponse({
-                    question: prompt,
-                    author: { username: 'system' },
-                });
-                if (response.text) {
-                    // Extract the most specific part
-                    const lines = response.text.split(/[.\n]/);
-                    for (const line of lines) {
-                        // Look for proper nouns, names, specific events
-                        if (line.length > 10 && line.length < 100) {
-                            // Extract key terms (capitalized words, hashtags, @mentions)
-                            const matches = line.match(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)*|#\w+|@\w+/g);
-                            if (matches && matches.length > 0) {
-                                const topic = matches.join(' ').trim();
-                                if (topic && !topics.some(t => t.name === topic)) {
-                                    topics.push({
-                                        name: topic,
-                                        context: line.trim()
-                                    });
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (err) {
-                logger.error('Failed to fetch specific trend', { err });
-            }
-        }
-        // If we got specific topics, use them
-        if (topics.length > 0) {
-            logger.info('Got specific trends from Perplexity', {
-                topics: topics.map(t => t.name).join(', ')
-            });
-            return topics;
-        }
+        // Use faster fallback topics to avoid timeout issues
+        // The enhanced engine with web search is too slow for hot takes generation
+        logger.info('Using time-specific topics for hot takes (faster generation)');
         // Fallback to time-specific topics
         return getTimeSpecificTopics();
     }

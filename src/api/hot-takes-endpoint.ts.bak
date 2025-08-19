@@ -34,6 +34,24 @@ function getCurrentHourCacheKey(): string {
 /**
  * Get current date context for more specific queries
  */
+function getCurrentContext() {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: '2-digit'
+  };
+  
+  return {
+    dateStr: now.toLocaleDateString('en-US', options),
+    hour: now.getHours(),
+    isWeekend: now.getDay() === 0 || now.getDay() === 6,
+    month: now.toLocaleDateString('en-US', { month: 'long' }),
+    year: now.getFullYear()
+  };
+}
 
 /**
  * Fetch SPECIFIC trending topics using Perplexity (only called once per hour)
