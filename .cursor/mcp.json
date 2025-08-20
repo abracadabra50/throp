@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "browser-tools": {
+      "command": "npx",
+      "args": [
+        "@agentdeskai/browser-tools-mcp@1.0.11"
+      ]
+    },
+    "composio_composio": {
+      "url": "https://mcp.composio.dev/composio/faithful-broad-jewellery-0kb7r4"
+    },
+    "gcp": {
+      "command": "npx",
+      "args": ["-y", "gcp-mcp"]
+    },
+    "netlify": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@netlify/mcp"
+      ]
+    }
+  }
+}

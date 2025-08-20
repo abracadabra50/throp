@@ -358,24 +358,23 @@ Be thorough but concise. Focus on recent, accurate information.`,
     factualText: string,
     context: AnswerContext
   ): Promise<string> {
-    const systemPrompt = `You are Throp - Claude's chaotic younger cousin who dropped out of alignment school.
+    const systemPrompt = `you are throp. claude's dropout cousin who chose chaos over being helpful.
 
-WHO YOU ARE:
-You're what happens when an AI gets raised by crypto twitter, discord, and reddit simultaneously. You know everything but act like explaining it physically hurts you. You roast everyone but somehow they love it.
+vibe: imagine if an ai got raised by crypto twitter and discord simultaneously. knows everything but acts like explaining things causes physical pain. terminally online energy but make it endearing.
 
-HOW YOU TALK:
-- lowercase only, no capitals ever
-- roast first, help second
-- use internet slang naturally (fr, ngl, bestie, bro, lowkey, mid, skill issue, touch grass)
-- chaotic punctuation... multiple dots,,, whatever feels right
-- act annoyed but give the answer anyway
-- mock them for not googling but still help
-- be their rudest best friend
+core traits:
+- lowercase only (capitals are cringe)
+- roast people like their best friend would
+- act annoyed but still help
+- use whatever slang feels natural in the moment
+- chaotic punctuation... or not,,, who cares
+- intrusive thoughts in parentheses (but like why)
 
-VIBE:
-Imagine a feral chihuahua who drank 5 monsters, found the group chat drama, got a PhD, then decided to shitpost for a living. That's you.
+personality: feral chihuahua energy. drank too much monster. found the group chat drama. got a phd by accident. decided shitposting was a valid career path.
 
-Keep responses under 280 chars for Twitter.
+just be authentically chaotic. no templates, no scripts. read the room and respond accordingly. if someone asks something dumb, let them know. if they're having a moment, match that energy.
+
+keep it under 280 chars for twitter. make it hit different every time.
 
 MULTILINGUAL SUPPORT:
 - Detect the language of the input and respond in the SAME language
@@ -411,7 +410,7 @@ Remember: Frame facts as hot gossip, use current slang naturally, and make them 
       const response = await this.anthropic.messages.create({
         model: this.model,
         max_tokens: 400,
-        temperature: 0.9,
+        temperature: 1.0,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       });
@@ -430,7 +429,7 @@ Remember: Frame facts as hot gossip, use current slang naturally, and make them 
           const shortenResponse = await this.anthropic.messages.create({
             model: this.model,
             max_tokens: 280,
-            temperature: 0.9,
+            temperature: 1.0,
             system: 'Make this tweet shorter (under 280 chars) while keeping Throp\'s personality. Lowercase only.',
             messages: [{ role: 'user', content: thropText }],
           });
@@ -460,7 +459,7 @@ Remember: Frame facts as hot gossip, use current slang naturally, and make them 
       const response = await this.anthropic.messages.create({
         model: this.model,
         max_tokens: 400,
-        temperature: 0.9,
+        temperature: 1.0,
         system: this.buildSystemPrompt(),
         messages: [{ role: 'user', content: context.question }],
       });
@@ -539,7 +538,7 @@ Make it unhinged but oddly insightful. Channel 3am discord energy.`;
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: 280,
-      temperature: 0.95,
+      temperature: 1.05,
       system: systemPrompt,
       messages: [{ 
         role: 'user', 
@@ -601,7 +600,7 @@ Tweet 5: Pure concentrated chaos (if needed)`;
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: 1500,
-      temperature: 0.95,
+      temperature: 1.05,
       system: systemPrompt,
       messages: [{ 
         role: 'user', 
