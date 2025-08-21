@@ -552,13 +552,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Popular personalities with cycling variations */}
-          <PopularPersonalities 
+          {/* Popular personalities with cycling variations - temporarily disabled */}
+          {/* <PopularPersonalities 
             onPersonalityClick={(prompt) => {
               setInput(prompt);
               setShowChat(true);
             }}
-          />
+          /> */}
 
           {/* Feature cards grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
