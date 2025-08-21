@@ -21,7 +21,7 @@
     "start:api": "node dist/src/api/start.js",
     "start:bot": "node dist/bin/throp.js",
     "start:monitor": "node dist/bin/monitor-quotes.js",
-    "postinstall": "npm install --legacy-peer-deps"
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
