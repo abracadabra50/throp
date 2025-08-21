@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
 import Link from 'next/link';
-import { TrendingPrompts } from '@/components/TrendingPrompts';
-import { PopularPersonalities } from '@/components/PopularPersonalities';
+
+
+
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
 import { 
@@ -262,15 +263,9 @@ export default function Home() {
         content: m.content,
       }));
 
-      // Try direct connection first, fall back to proxy if CORS issue
+      // Use the backend API directly
       const response = await (async () => {
-      let apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      
-      // Use proxy unless we have a specific backend URL (localhost for dev or run.app for direct)
-      if (!apiUrl || (!apiUrl.includes('localhost') && !apiUrl.includes('run.app'))) {
-        console.log('Using Netlify function proxy for production API');
-        apiUrl = '/.netlify/functions/chat-proxy';
-      }
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://throp-bot-947985992378.us-central1.run.app/api/chat';
       
       console.log('Sending request to:', apiUrl);
       
@@ -281,7 +276,15 @@ export default function Home() {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          messages: messagesToSend,
+          message: input.trim(),
+          context: {
+            username: 'web_user',
+            conversationHistory: messagesToSend,
+            metadata: {
+              source: 'frontend',
+              platform: 'web'
+            }
+          }
         }),
       });
     })();
@@ -491,13 +494,25 @@ export default function Home() {
                 🔄
               </button>
             </div>
-            <TrendingPrompts 
-              prompts={trendingPrompts}
-              onPromptClick={(prompt) => {
-                setInput(prompt);
-                setShowChat(true);
-              }}
-            />
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-3 flex-1 justify-center">
+              {trendingPrompts.slice(0, 3).map((prompt, idx) => (
+                <button
+                  key={prompt}
+                  onClick={() => {
+                    setInput(prompt);
+                    setShowChat(true);
+                  }}
+                  className="px-4 py-3 md:px-5 md:py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-sm font-medium shadow-sm w-full md:w-auto md:max-w-[280px] text-center"
+                  style={{ 
+                    boxShadow: '3px 3px 0 #000',
+                    transform: `rotate(${Math.random() * 3 - 1.5}deg)`
+                  }}
+                  title={prompt}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
 
             {/* Quick chat entry */}
             <div className="max-w-xl mx-auto mt-8">
@@ -533,22 +548,75 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Popular personalities with cycling variations */}
-          <PopularPersonalities 
-            onPersonalityClick={(prompt) => {
-              setInput(prompt);
-              setShowChat(true);
-            }}
-          />
+          {/* Popular categories */}
+          <div className="mb-12">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-center">
+              throp <span className="text-orange-500">knows</span>
+            </h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto text-center mb-8">
+              terminally online across every community. ask about literally anything and get roasted while learning
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {[
+                { name: "crypto degeneracy", emoji: "₿", tagline: "ser, anon, wagmi energy", prompt: "explain why my bags are down and which shitcoin will moon next" },
+                { name: "tech bro nonsense", emoji: "💻", tagline: "disrupting disruption", prompt: "roast the latest tech layoffs with maximum attitude" },
+                { name: "fintwit wisdom", emoji: "📈", tagline: "buffett quotes & cope", prompt: "explain the stock market like it's high school drama" },
+                { name: "gaming toxicity", emoji: "🕹️", tagline: "git gud or go home", prompt: "explain why 30fps is literally unplayable in 2025" },
+                { name: "gen z brainrot", emoji: "🧠", tagline: "ohio sigma energy", prompt: "translate 'no cap fr fr' for confused millennials" },
+                { name: "gymcel philosophy", emoji: "💪", tagline: "we go jim, brah", prompt: "explain gymcel culture and why everyone says 'we go jim'" },
+                { name: "food reviewer brain", emoji: "🍕", tagline: "that's not authentic", prompt: "why is everyone a food critic now and nothing is authentic" },
+                { name: "sports twitter chaos", emoji: "⚽", tagline: "he's washed, trade him", prompt: "explain why every player is either washed or the goat" },
+                { name: "political twitter", emoji: "🏛️", tagline: "ratio + L + you fell off", prompt: "decode political twitter and why everyone gets ratio'd" },
+                { name: "tiktok brain rot", emoji: "📱", tagline: "the algorithm owns you", prompt: "explain why this trend is already dead and pov culture" },
+                { name: "twitch parasocial hell", emoji: "🎮", tagline: "chat is this real?", prompt: "explain why you donate to millionaire streamers" },
+                { name: "ecom grifting", emoji: "🛒", tagline: "7-figure exit energy", prompt: "why dropshipping is dead and facebook ads are a scam" },
+                { name: "money twitter cope", emoji: "💰", tagline: "passive income delusions", prompt: "explain why your 9-5 is actually fine and multiple income streams are poverty" },
+                { name: "gadget reviewer", emoji: "📱", tagline: "for the price point", prompt: "why you don't need the new iphone and planned obsolescence conspiracy" },
+                { name: "twitch/kick degeneracy", emoji: "🎬", tagline: "mods ban this guy", prompt: "explain emote spam psychology and why just chatting isn't content" }
+              ].map((item, index) => (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    setInput(item.prompt);
+                    setShowChat(true);
+                  }}
+                  className="bg-white border-2 border-black rounded-2xl p-4 h-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-orange-50 group"
+                  style={{ 
+                    boxShadow: '3px 3px 0 #000',
+                    transform: `rotate(${(Math.sin(index * 0.5) * 1.5)}deg)`
+                  }}
+                  title={item.prompt}
+                >
+                  <div className="text-3xl mb-3 text-center group-hover:scale-110 transition-transform">
+                    {item.emoji}
+                  </div>
+                  <h3 className="font-bold text-sm mb-2 text-center leading-tight">
+                    {item.name}
+                  </h3>
+                  <p className="text-xs text-gray-600 text-center italic">
+                    {item.tagline}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {/* Feature cards grid */}
+          {/* Chaos Level Cards - Integrated with ThropKnows above */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {/* Hot Takes Card */}
-            <div className="group cursor-pointer" onClick={() => setShowChat(true)}>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
-                   style={{ boxShadow: '4px 4px 0 #000' }}>
+            {/* Unhinged Takes Card */}
+            <div className="group cursor-pointer" 
+                 onClick={() => {
+                   setInput("give me your most unhinged take on literally anything happening right now");
+                   setShowChat(true);
+                 }}>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-3 border-black rounded-2xl p-6 h-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:-rotate-1"
+                   style={{ 
+                     boxShadow: '4px 4px 0 #000',
+                     animation: 'slideInUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.1s forwards',
+                     opacity: 0
+                   }}>
                 <div className="flex items-start justify-between mb-4">
-                  <span className="text-4xl">🔥</span>
+                  <span className="text-4xl group-hover:animate-bounce">🔥</span>
                   <span className="text-xs bg-orange-200 px-2 py-1 rounded-full font-semibold">hot</span>
                 </div>
                 <h3 className="font-bold text-xl mb-2">unhinged takes</h3>
@@ -561,16 +629,21 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Crypto Card */}
-            <div className="group cursor-pointer" onClick={() => {
-              setInput("whats happening in crypto today");
-              setShowChat(true);
-            }}>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-3 border-black rounded-2xl p-6 h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
-                   style={{ boxShadow: '4px 4px 0 #000' }}>
+            {/* Crypto Decoder Card */}
+            <div className="group cursor-pointer"
+                 onClick={() => {
+                   setInput("why are my bags down and which shitcoin is about to moon next");
+                   setShowChat(true);
+                 }}>
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-3 border-black rounded-2xl p-6 h-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:rotate-1"
+                   style={{ 
+                     boxShadow: '4px 4px 0 #000',
+                     animation: 'slideInUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.2s forwards',
+                     opacity: 0
+                   }}>
                 <div className="flex items-start justify-between mb-4">
-                  <span className="text-4xl">💰</span>
-                  <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-semibold">degen</span>
+                  <span className="text-4xl group-hover:animate-spin">💰</span>
+                  <span className="text-xs bg-yellow-200 px-2 py-1 rounded-full font-semibold">degen</span>
                 </div>
                 <h3 className="font-bold text-xl mb-2">crypto decoder</h3>
                 <p className="text-sm text-gray-700 mb-4">
@@ -815,8 +888,8 @@ export default function Home() {
         {/* Chat section */}
         <div className="flex-1 flex flex-col">
           {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
-            <div className="max-w-4xl mx-auto">
+          <div className="flex-1 overflow-y-auto px-3 md:px-8 lg:px-12 py-4 md:py-6">
+            <div className="max-w-6xl mx-auto">
               {messages.length === 0 && (
                 <div className="text-center py-20">
                   <Image 
@@ -913,8 +986,8 @@ export default function Home() {
           </div>
 
           {/* Input Area */}
-          <div className="flex-shrink-0 border-t-4 border-black bg-gradient-to-t from-[#fefdfb] via-[#fefdfb] to-transparent">
-            <div className="max-w-4xl mx-auto px-3 md:px-6 py-4 md:py-6">
+          <div className="flex-shrink-0 border-t-4 border-black bg-gradient-to-t from-[#fefdfb] via-[#fefdfb] to-transparent mb-16">
+            <div className="max-w-6xl mx-auto px-3 md:px-8 lg:px-12 py-4 md:py-8">
               {/* Command Suggestions */}
               {commandSuggestions.length > 0 && (
                 <div className="mb-2 bg-white border-4 border-black rounded-lg overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -941,7 +1014,7 @@ export default function Home() {
                 </div>
               )}
               
-              <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3 md:p-4">
+              <form onSubmit={handleSubmit} className="flex gap-3 md:gap-4 p-3 md:p-6 lg:p-8">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -990,15 +1063,16 @@ export default function Home() {
                     handleKeyDown(e);
                   }}
                   placeholder="type somethin... or just mash ur keyboard idc (try /help)"
-                  rows={2}
-                  className="scuffed-input flex-1 text-lg"
+                  rows={3}
+                  className="scuffed-input flex-1 text-lg md:text-xl"
                   style={{
-                    minHeight: '60px',
-                    maxHeight: '150px',
+                    minHeight: '80px',
+                    maxHeight: '200px',
                     resize: 'vertical',
                     transform: 'rotate(-0.3deg)',
                     fontSize: '18px',
-                    padding: '14px 20px'
+                    padding: '16px 24px',
+                    lineHeight: '1.5'
                   }}
                   disabled={isLoading}
                 />
@@ -1007,8 +1081,9 @@ export default function Home() {
                   disabled={isLoading || !input.trim()}
                   className="scuffed-button self-end"
                   style={{ 
-                    fontSize: '20px',
-                    padding: '14px 28px'
+                    fontSize: '22px',
+                    padding: '18px 32px',
+                    minWidth: '120px'
                   }}
                 >
                   {isLoading ? '...' : 'send it'}
@@ -1029,6 +1104,36 @@ export default function Home() {
         {/* Desktop Hot Takes Sidebar */}
         <div className="hidden md:block w-96 border-l-4 border-black">
           <HotTakes />
+        </div>
+      </div>
+      
+      {/* Fixed Footer - Same as home page */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 py-3 z-10">
+        {/* Mobile: Simple centered links */}
+        <div className="md:hidden flex justify-center gap-6 text-sm">
+          <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+          <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+          <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+          <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+        </div>
+        
+        {/* Desktop: Full footer with logo, left menu, right powered by */}
+        <div className="hidden md:flex items-center justify-between px-6">
+          {/* Left: Small Throp logo + Navigation (OS menu bar style) */}
+          <div className="flex items-center gap-6">
+            <Image src="/throp-actual.svg" alt="throp" width={24} height={24} className="opacity-70" />
+            <div className="flex gap-6 text-sm">
+              <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+              <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+              <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+              <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+            </div>
+          </div>
+          
+          {/* Right: Powered by */}
+          <div className="text-xs text-gray-400">
+            powered by <span className="font-bold">$throp</span>
+          </div>
         </div>
       </div>
     </div>

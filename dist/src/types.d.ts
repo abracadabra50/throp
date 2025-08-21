@@ -15,7 +15,7 @@ export type TwitterApiPlan = 'basic' | 'pro' | 'enterprise';
  * Supported AI answer engines
  * Each engine has different capabilities and use cases
  */
-export type AnswerEngine = 'openai' | 'perplexity' | 'dexa' | 'custom' | 'hybrid-claude';
+export type AnswerEngine = 'openai' | 'perplexity' | 'perplexity-intelligent' | 'dexa' | 'custom' | 'hybrid-claude';
 /**
  * Bot configuration schema using Zod for runtime validation
  */
@@ -106,8 +106,24 @@ export declare const ConfigSchema: z.ZodObject<{
         maxTokens?: number | undefined;
         temperature?: number | undefined;
     }>;
+    anthropic: z.ZodObject<{
+        apiKey: z.ZodOptional<z.ZodString>;
+        model: z.ZodDefault<z.ZodString>;
+        maxTokens: z.ZodDefault<z.ZodNumber>;
+        temperature: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        model: string;
+        maxTokens: number;
+        temperature: number;
+        apiKey?: string | undefined;
+    }, {
+        apiKey?: string | undefined;
+        model?: string | undefined;
+        maxTokens?: number | undefined;
+        temperature?: number | undefined;
+    }>;
     bot: z.ZodObject<{
-        answerEngine: z.ZodDefault<z.ZodEnum<["hybrid-claude", "perplexity", "perplexity-chaos", "custom"]>>;
+        answerEngine: z.ZodDefault<z.ZodEnum<["hybrid-claude", "perplexity", "perplexity-intelligent", "perplexity-chaos", "custom"]>>;
         maxMentionsPerBatch: z.ZodDefault<z.ZodNumber>;
         maxTweetsPerHour: z.ZodDefault<z.ZodNumber>;
         maxTweetLength: z.ZodDefault<z.ZodNumber>;
@@ -116,7 +132,7 @@ export declare const ConfigSchema: z.ZodObject<{
         dryRun: z.ZodDefault<z.ZodBoolean>;
         debug: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        answerEngine: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos";
+        answerEngine: "perplexity" | "perplexity-intelligent" | "custom" | "hybrid-claude" | "perplexity-chaos";
         maxMentionsPerBatch: number;
         maxTweetsPerHour: number;
         maxTweetLength: number;
@@ -125,7 +141,7 @@ export declare const ConfigSchema: z.ZodObject<{
         dryRun: boolean;
         debug: boolean;
     }, {
-        answerEngine?: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
+        answerEngine?: "perplexity" | "perplexity-intelligent" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
         maxMentionsPerBatch?: number | undefined;
         maxTweetsPerHour?: number | undefined;
         maxTweetLength?: number | undefined;
@@ -203,8 +219,14 @@ export declare const ConfigSchema: z.ZodObject<{
         namespace: string;
         url?: string | undefined;
     };
+    anthropic: {
+        model: string;
+        maxTokens: number;
+        temperature: number;
+        apiKey?: string | undefined;
+    };
     bot: {
-        answerEngine: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos";
+        answerEngine: "perplexity" | "perplexity-intelligent" | "custom" | "hybrid-claude" | "perplexity-chaos";
         maxMentionsPerBatch: number;
         maxTweetsPerHour: number;
         maxTweetLength: number;
@@ -260,8 +282,14 @@ export declare const ConfigSchema: z.ZodObject<{
         url?: string | undefined;
         namespace?: string | undefined;
     };
+    anthropic: {
+        apiKey?: string | undefined;
+        model?: string | undefined;
+        maxTokens?: number | undefined;
+        temperature?: number | undefined;
+    };
     bot: {
-        answerEngine?: "perplexity" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
+        answerEngine?: "perplexity" | "perplexity-intelligent" | "custom" | "hybrid-claude" | "perplexity-chaos" | undefined;
         maxMentionsPerBatch?: number | undefined;
         maxTweetsPerHour?: number | undefined;
         maxTweetLength?: number | undefined;
@@ -424,6 +452,7 @@ export interface AnswerContext {
         url: string;
         altText?: string;
     }>;
+    metadata?: Record<string, any>;
 }
 /**
  * Processing pipeline stage

@@ -7,7 +7,9 @@ import { PerplexityEngine } from './perplexity.js';
 import { logger } from '../utils/logger.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { getTwitterSearch } from '../twitter/twitter-search.js';
+// import { createFixedOrchestrator } from './orchestrator-fixed.js'; // Disabled for now
 export class HybridClaudeEngine extends BaseAnswerEngine {
+    // private orchestrator: any; // Enhanced orchestrator - disabled for now
     perplexity;
     anthropic;
     model;
@@ -30,6 +32,7 @@ export class HybridClaudeEngine extends BaseAnswerEngine {
         this.anthropic = new Anthropic({
             apiKey: anthropicKey,
         });
+        // Enhanced orchestrator disabled for now - using intelligent engine instead
         this.model = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
     }
     /**

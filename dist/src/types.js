@@ -44,9 +44,16 @@ export const ConfigSchema = z.object({
         maxTokens: z.number().default(1000),
         temperature: z.number().default(0.7),
     }),
+    // Anthropic configuration
+    anthropic: z.object({
+        apiKey: z.string().optional(),
+        model: z.string().default('claude-3-5-sonnet-20241022'),
+        maxTokens: z.number().default(1000),
+        temperature: z.number().default(0.7),
+    }),
     // Bot behaviour settings
     bot: z.object({
-        answerEngine: z.enum(['hybrid-claude', 'perplexity', 'perplexity-chaos', 'custom']).default('hybrid-claude'),
+        answerEngine: z.enum(['hybrid-claude', 'perplexity', 'perplexity-intelligent', 'perplexity-chaos', 'custom']).default('hybrid-claude'),
         maxMentionsPerBatch: z.number().default(10),
         maxTweetsPerHour: z.number().default(30),
         maxTweetLength: z.number().default(280),

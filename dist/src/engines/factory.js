@@ -1,44 +1,47 @@
 /**
- * Engine Factory - Creates the appropriate answer engine based on configuration
+ * Answer Engine Factory
+ * Creates the appropriate answer engine based on configuration
  */
+import { createPerplexityEngine } from './perplexity.js';
+import { createIntelligentPerplexityEngine } from './perplexity-intelligent.js';
+import { createPerplexityChaosEngine } from './perplexity-chaos.js';
+import { createHybridClaudeEngine } from './hybrid-claude.js';
 import { logger } from '../utils/logger.js';
 import { getConfig } from '../config.js';
-import { createHybridClaudeEngine } from './hybrid-claude.js';
-import { createHybridClaudeEngineV2 } from './hybrid-claude-v2.js';
-import { createPerplexityEngine } from './perplexity.js';
-import { createPerplexityChaosEngine } from './perplexity-chaos.js';
 /**
- * Create answer engine based on configuration
+ * Create the configured answer engine
  */
 export function createAnswerEngine() {
     const config = getConfig();
     const engineType = config.bot.answerEngine;
     logger.info('Creating answer engine', { type: engineType });
     switch (engineType) {
-        case 'hybrid-claude':
-            return createHybridClaudeEngine();
-        case 'hybrid-claude-v2':
-            logger.info('Using enhanced hybrid engine with Anthropic web search');
-            return createHybridClaudeEngineV2();
         case 'perplexity':
             return createPerplexityEngine();
+        case 'perplexity-intelligent':
+            logger.info('🧠 Initializing Intelligent Perplexity Engine with Extended Thinking + Sonar Reasoning');
+            return createIntelligentPerplexityEngine();
         case 'perplexity-chaos':
             return createPerplexityChaosEngine();
+        case 'hybrid-claude':
+            return createHybridClaudeEngine();
+        case 'custom':
+            throw new Error('Custom answer engine not implemented. Please provide your own implementation.');
         default:
-            logger.warn(`Unknown engine type: ${engineType}, falling back to hybrid-claude`);
+            logger.warn('Unknown answer engine type, falling back to hybrid-claude', { engineType });
             return createHybridClaudeEngine();
     }
 }
 /**
- * Legacy factory function for backwards compatibility
+ * Get available answer engines with descriptions
  */
-export function createHybridClaudeEngineFromConfig() {
-    const config = getConfig();
-    // If V2 is configured, use it
-    if (config.bot.answerEngine === 'hybrid-claude-v2') {
-        return createHybridClaudeEngineV2();
-    }
-    // Otherwise use original
-    return createHybridClaudeEngine();
+export function getAvailableEngines() {
+    return {
+        'hybrid-claude': 'Perplexity for facts + Claude for personality (default)',
+        'perplexity': 'Pure Perplexity with static community knowledge',
+        'perplexity-intelligent': '🧠 NEW: Extended Thinking + Sonar Reasoning for dynamic community analysis',
+        'perplexity-chaos': 'Perplexity with maximum chaos energy',
+        'custom': 'User-defined engine implementation'
+    };
 }
 //# sourceMappingURL=factory.js.map

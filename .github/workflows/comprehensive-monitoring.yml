@@ -47,7 +47,7 @@ jobs:
           echo "💰 Checking Anthropic API Balance using GCP Secret Manager..."
           
           # Get API key from GCP Secret Manager
-          ANTHROPIC_API_KEY=$(gcloud secrets versions access latest --secret="ANTHROPIC_API_KEY" 2>/dev/null || echo "MISSING")
+          ANTHROPIC_API_KEY=$(gcloud secrets versions access latest --secret="anthropic-api-key" 2>/dev/null || echo "MISSING")
           
           cat > check-anthropic.js << 'EOF'
           const fetch = require('node-fetch');

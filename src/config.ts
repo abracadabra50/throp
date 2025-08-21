@@ -49,6 +49,10 @@ export function loadConfig(): Config {
         apiKey: process.env.PERPLEXITY_API_KEY,
         model: process.env.PERPLEXITY_MODEL || 'sonar',
       },
+      anthropic: {
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+      },
       bot: {
         answerEngine: process.env.ANSWER_ENGINE || 'hybrid-claude',
         maxMentionsPerBatch: parseInt(process.env.MAX_MENTIONS_PER_BATCH || '10', 10),
@@ -116,6 +120,14 @@ function validateAnswerEngine(config: Config): void {
     case 'perplexity':
       if (!config.perplexity.apiKey) {
         throw new Error('Perplexity API key is required when using Perplexity answer engine');
+      }
+      break;
+    case 'perplexity-intelligent':
+      if (!config.perplexity.apiKey) {
+        throw new Error('Perplexity API key is required when using perplexity-intelligent answer engine');
+      }
+      if (!process.env.ANTHROPIC_API_KEY) {
+        throw new Error('Anthropic API key is required when using perplexity-intelligent answer engine');
       }
       break;
     case 'perplexity-chaos':

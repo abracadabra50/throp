@@ -11,7 +11,7 @@ import { logger } from '../utils/logger.js';
 import { getConfig } from '../config.js';
 import { TwitterClient } from '../twitter/client.js';
 // import { createPerplexityChaosEngine } from '../engines/perplexity-chaos.js'; // Unused
-import { createHybridClaudeEngine } from '../engines/hybrid-claude.js';
+import { createAnswerEngine } from '../engines/factory.js';
 import { createTweetRoutes } from './tweet-endpoints.js';
 import { RedisCache } from '../cache/redis.js';
 import { handleHotTakes } from './hot-takes-endpoint.js';
@@ -73,7 +73,7 @@ export class ApiServer {
   private io: SocketIOServer;
   private port: number;
   private twitterClient: TwitterClient | null = null;
-  private answerEngine: ReturnType<typeof createHybridClaudeEngine>;
+  private answerEngine: ReturnType<typeof createAnswerEngine>;
   private cache: RedisCache;
   private startTime: Date;
   private mentionPollingInterval: NodeJS.Timeout | null = null;
@@ -109,7 +109,7 @@ export class ApiServer {
     
     // Try to initialize answer engine, but don't crash if it fails
     try {
-      this.answerEngine = createHybridClaudeEngine();
+      this.answerEngine = createAnswerEngine();
       logger.info('Answer engine initialized successfully');
     } catch (error) {
       logger.error('Answer engine initialization failed - chat features disabled', error);
@@ -280,13 +280,18 @@ export class ApiServer {
           hasContext: !!context,
         });
         
-        // Build answer context
+        // Build answer context with platform information
         const answerContext: AnswerContext = {
           question: message,
           author: {
             username: context?.username || 'web_user',
             name: context?.username || 'Web User',
           },
+          metadata: {
+            source: 'frontend', // This tells the intelligent engine it can use longer responses
+            platform: 'frontend',
+            ...context?.metadata
+          }
         };
         
         // Add conversation history if provided
@@ -681,7 +686,7 @@ export class ApiServer {
     // Check Perplexity connection
     let perplexityConnected = false;
     try {
-      await this.answerEngine.validate();
+      await this.answerEngine.validateConfiguration();
       perplexityConnected = true;
     } catch (error) {
       logger.debug('Perplexity status check failed', error);
@@ -733,7 +738,7 @@ export class ApiServer {
     
     if (this.answerEngine) {
       try {
-        await this.answerEngine.validate();
+        await this.answerEngine.validateConfiguration();
         logger.info('Answer engine validated');
       } catch (error) {
         logger.warn('Answer engine validation failed - some features may be unavailable', error);
@@ -817,12 +822,18 @@ export class ApiServer {
         try {
           logger.info(`Processing mention from @${mention.authorUsername}: "${mention.text.substring(0, 50)}..."`);
           
-          // Generate response using the hybrid engine
+          // Generate response using the answer engine with Twitter context
           const answerContext: AnswerContext = {
             question: mention.text,
             author: {
               username: mention.authorUsername || 'unknown',
             },
+            metadata: {
+              source: 'twitter', // This tells the intelligent engine to use 280 char limit
+              platform: 'twitter',
+              mentionId: mention.id,
+              tweetId: mention.id
+            }
           };
           const engineResponse = await this.answerEngine.generateResponse(answerContext);
           
