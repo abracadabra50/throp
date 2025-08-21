@@ -61,13 +61,24 @@ export class TwitterClient {
         }
         // Initialize Bearer Token client for READING if available (better rate limits)
         if (bearerToken) {
-            this.readClient = new TwitterApi(bearerToken);
-            logger.info('✅ Bearer Token client initialized for reading mentions');
+            try {
+                // URL decode the bearer token (Twitter API returns URL-encoded tokens)
+                const decodedBearerToken = decodeURIComponent(bearerToken);
+                logger.info('Bearer token URL-decoded for HTTP headers');
+                this.readClient = new TwitterApi(decodedBearerToken);
+                logger.info('✅ Bearer Token client initialized for reading mentions (URL-decoded)');
+            }
+            catch (error) {
+                logger.error('Failed to initialize Bearer Token client:', error);
+                // Fallback to OAuth 1.0a client for reading
+                this.readClient = this.client;
+                logger.info('Using OAuth 1.0a client for reading (Bearer Token failed)');
+            }
         }
         else {
             // Fallback to OAuth 1.0a client for reading
             this.readClient = this.client;
-            logger.info('Using OAuth 1.0a client for reading (lower rate limits)');
+            logger.info('Using OAuth 1.0a client for reading (no Bearer Token)');
         }
         this.v2Client = this.client.v2;
         // Set up rate limiting based on API plan
