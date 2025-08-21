@@ -166,7 +166,7 @@ jobs:
                   'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
-                  model: 'sonar-small-online',
+                  model: 'sonar',
                   messages: [{ role: 'user', content: 'test' }],
                   max_tokens: 5
                 })

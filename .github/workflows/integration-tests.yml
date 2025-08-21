@@ -50,7 +50,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"message": "test"}')
           
-          if echo "$RESPONSE" | grep -q "success"; then
+          if echo "$RESPONSE" | grep -q '"success":true'; then
             echo "✅ Chat endpoint working"
           else
             echo "❌ Chat endpoint failed"

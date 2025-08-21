@@ -13,7 +13,7 @@ export declare class IntelligentPerplexityEngine extends BaseAnswerEngine {
     generateResponse(context: AnswerContext): Promise<AnswerEngineResponse>;
     private analyzeCommunities;
     private gatherCurrentContext;
-    private isPromptFishingAttempt;
+    private isObviousPromptFishing;
     private handlePromptFishing;
     private generateEnhancedResponse;
     private buildIntelligentSystemPrompt;
