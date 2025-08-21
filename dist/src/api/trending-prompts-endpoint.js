@@ -1,31 +1,52 @@
 /**
  * Trending Prompts Endpoint - Returns cached trending prompts
- * With hourly caching for fresh content
+ * With hourly Redis caching for fresh content
  */
 import { logger } from '../utils/logger.js';
-// Simple in-memory cache
-let cachedPrompts = null;
-let cacheTime = 0;
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+import { getRedisCache } from '../cache/redis.js';
+// Cache configuration
+const HOURLY_CACHE_DURATION = 3600; // 1 hour in seconds
+/**
+ * Generate cache key for current hour
+ */
+function getCurrentHourCacheKey() {
+    const now = new Date();
+    const hourKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+    return `trending-prompts:${hourKey}`;
+}
 /**
  * Handle trending prompts request
  */
 export async function handleTrendingPrompts(_req, res) {
     try {
-        const nowTime = Date.now();
-        // Return cached prompts if still valid
-        if (cachedPrompts && (nowTime - cacheTime) < CACHE_DURATION) {
-            logger.info('Returning cached trending prompts');
-            res.json({
-                success: true,
-                prompts: cachedPrompts,
-                source: 'cached',
-                ttl: Math.floor((CACHE_DURATION - (nowTime - cacheTime)) / 1000)
-            });
-            return;
+        logger.info('Trending prompts endpoint called');
+        const cache = getRedisCache();
+        const cacheKey = getCurrentHourCacheKey();
+        // Try to get from Redis cache first
+        try {
+            const cachedData = await cache.get(cacheKey);
+            if (cachedData) {
+                const parsedData = JSON.parse(cachedData);
+                logger.info('Returning cached trending prompts from Redis', {
+                    generatedAt: parsedData.generatedAt,
+                    count: parsedData.prompts.length,
+                    cacheKey
+                });
+                res.json({
+                    success: true,
+                    prompts: parsedData.prompts,
+                    source: 'redis-hourly-cache',
+                    generatedAt: parsedData.generatedAt,
+                    nextUpdate: parsedData.nextUpdate
+                });
+                return;
+            }
+        }
+        catch (cacheError) {
+            logger.warn('Failed to get trending prompts from cache, generating fresh', { cacheError });
         }
         // Generate new prompts with current trends
-        logger.info('Generating new trending prompts');
+        logger.info('Generating fresh trending prompts (will cache for 1 hour)');
         // Get current date/time context
         const nowDate = new Date();
         const month = nowDate.toLocaleDateString('en-US', { month: 'long' });
@@ -54,14 +75,33 @@ export async function handleTrendingPrompts(_req, res) {
             `explain web3 like a shitpost`,
             `what's the most chronically online thing about checking bluesky and twitter`
         ];
-        // Cache the prompts
-        cachedPrompts = prompts;
-        cacheTime = nowTime;
+        // Calculate next update time
+        const now = new Date();
+        const nextUpdate = new Date(now);
+        nextUpdate.setHours(nextUpdate.getHours() + 1, 0, 0, 0); // Next hour on the hour
+        // Cache in Redis for 1 hour
+        const cacheData = {
+            prompts,
+            generatedAt: now.toISOString(),
+            nextUpdate: nextUpdate.toISOString()
+        };
+        try {
+            await cache.set(cacheKey, JSON.stringify(cacheData), HOURLY_CACHE_DURATION);
+            logger.info('Cached trending prompts in Redis for 1 hour', {
+                key: cacheKey,
+                count: prompts.length,
+                nextUpdate: nextUpdate.toISOString()
+            });
+        }
+        catch (cacheError) {
+            logger.warn('Failed to cache trending prompts', { cacheError });
+        }
         res.json({
             success: true,
-            prompts: prompts,
-            source: 'generated',
-            ttl: CACHE_DURATION / 1000
+            prompts,
+            source: 'fresh',
+            generatedAt: now.toISOString(),
+            nextUpdate: nextUpdate.toISOString()
         });
     }
     catch (error) {

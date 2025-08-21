@@ -1,20 +1,33 @@
 # Changelog
 
-## [2025-01-21] - Mobile Trending Prompts Enhancement 📱
+## [2025-01-21] - Mobile UI & Performance Enhancements 📱⚡
 
 ### Improved 🎯
 - **Mobile Trending Prompts**: Replaced the flex-wrap display with a cycling component that shows only 3 prompts at a time on mobile
-- **Automatic Rotation**: Trending prompts now auto-cycle every 5 seconds with smooth fade-in animations
-- **Mobile Responsiveness**: Better text truncation and button sizing for mobile screens (25 chars vs 35 chars on desktop)
-- **Responsive Design**: Enhanced gap spacing and padding that adapts to screen size (sm:gap-3 vs gap-2)
+- **Automatic Rotation**: Trending prompts now auto-cycle every 30 seconds with smooth fade-in animations
+- **Mobile Responsiveness**: Better text truncation and button sizing for mobile screens, vertical stacking on mobile
+- **Responsive Design**: Enhanced gap spacing and padding that adapts to screen size (md:flex-row for desktop)
 - **Animation Effects**: Added subtle rotation and fade-in animations for a more engaging user experience
+- **Desktop Layout**: Increased max-width from 6xl to 7xl (1280px) for better desktop space utilisation
+- **Footer Enhancement**: Fixed footer with OS-style menu bar, Throp logo, and proper mobile/desktop variants
+- **Header CTA**: Replaced "about" link with prominent "start yapping →" button
+- **Consistent Footers**: All pages (home, about, docs) now use the same fixed footer design
+- **Popular Personalities**: Replaced static "Popular RN" with dynamic cycling through 15 personalities with 3 variations each
+
+### Performance Optimisations ⚡
+- **Redis Caching**: Implemented hourly Redis caching for both hot takes and trending prompts
+- **Cost Reduction**: API calls now happen once per hour instead of every request
+- **Faster Loading**: Cached content loads instantly from Redis instead of generating fresh each time
+- **Smart Cache Keys**: Hour-based cache keys ensure fresh content every hour automatically
 
 ### Technical Details 🔧
 - Integrated existing `TrendingPrompts` component into main page
-- Added mobile detection with window resize listener
-- Improved responsive Tailwind classes (xs/sm/md breakpoints)
+- Added mobile detection with window resize listener (768px breakpoint)
+- Improved responsive Tailwind classes (md: breakpoints)
 - Enhanced text truncation logic based on screen size
-- Maintained existing refresh functionality
+- Redis cache implementation with 1-hour TTL for trending prompts and hot takes
+- Cache keys based on current hour for automatic expiry
+- Fallback to fresh generation if Redis unavailable
 
 ## [2025-08-21] - CI/CD Pipeline Enhancement & MCP Integration 🚀
 

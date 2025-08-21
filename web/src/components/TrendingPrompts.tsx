@@ -27,22 +27,12 @@ interface TrendingPromptsProps {
 export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayPrompts, setDisplayPrompts] = useState<string[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
+
   
   const PROMPTS_TO_SHOW = 3;
   const ROTATION_INTERVAL = 30000; // Rotate every 30 seconds - balanced timing
   
-  // Detect mobile screen size
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768); // Match md: breakpoint
-    };
-    
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
+
   
   // Auto-rotate prompts
   useEffect(() => {

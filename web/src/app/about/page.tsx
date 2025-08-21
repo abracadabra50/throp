@@ -96,7 +96,7 @@ export default function About() {
         <div className="text-sm text-gray-600">about</div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-12 md:px-12">
+      <div className="max-w-4xl mx-auto px-6 py-12 md:px-12 pb-20">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="mb-8">
@@ -303,17 +303,39 @@ export default function About() {
             <span className="text-2xl">→</span>
           </Link>
           
-          {/* Footer Navigation */}
-          <div className="flex justify-center gap-6 mt-8 text-sm">
-            <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
-            <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
-            <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
-            <a href="https://x.com/throponsol" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">twitter</a>
-          </div>
-          
           <p className="text-xs text-gray-500 mt-4">
             disclaimer: throp is not financial advice, life advice, or any kind of advice really
           </p>
+        </div>
+      </div>
+      
+      {/* Fixed Footer - Same as home page */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 py-3 z-10">
+        {/* Mobile: Simple centered links */}
+        <div className="md:hidden flex justify-center gap-6 text-sm">
+          <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+          <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+          <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+          <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+        </div>
+        
+        {/* Desktop: Full footer with logo, left menu, right powered by */}
+        <div className="hidden md:flex items-center justify-between px-6">
+          {/* Left: Small Throp logo + Navigation (OS menu bar style) */}
+          <div className="flex items-center gap-6">
+            <Image src="/throp-actual.svg" alt="throp" width={24} height={24} className="opacity-70" />
+            <div className="flex gap-6 text-sm">
+              <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+              <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+              <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+              <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+            </div>
+          </div>
+          
+          {/* Right: Powered by */}
+          <div className="text-xs text-gray-400">
+            powered by <span className="font-bold">$throp</span>
+          </div>
         </div>
       </div>
     </div>

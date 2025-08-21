@@ -1,6 +1,6 @@
 /**
  * Trending Prompts Endpoint - Returns cached trending prompts
- * With hourly caching for fresh content
+ * With hourly Redis caching for fresh content
  */
 import { Request, Response } from 'express';
 /**

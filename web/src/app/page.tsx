@@ -5,6 +5,7 @@ import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
 import Link from 'next/link';
 import { TrendingPrompts } from '@/components/TrendingPrompts';
+import { PopularPersonalities } from '@/components/PopularPersonalities';
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
 import { 
@@ -436,17 +437,28 @@ export default function Home() {
             <span className="font-bold text-2xl">throp</span>
           </Link>
           <div className="flex items-center gap-6">
-            <a 
-              href="/about" 
-              className="text-sm font-medium hover:text-orange-500 transition-all"
+            <button
+              onClick={() => {
+                const domainType = getDomainType();
+                if (domainType === 'landing') {
+                  // Redirect to chat.throp.ai
+                  window.location.href = 'https://chat.throp.ai';
+                } else {
+                  // Local environment - use state-based navigation
+                  setShowChat(true);
+                }
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full border-2 border-black font-medium text-sm hover:scale-105 transition-all"
+              style={{ 
+                boxShadow: '3px 3px 0 #000',
+              }}
             >
-              about
-            </a>
-
+              start yapping →
+            </button>
           </div>
         </header>
 
-        <div className="max-w-6xl mx-auto px-6 py-8 md:px-12">
+        <div className="max-w-7xl mx-auto px-6 py-8 md:px-12 lg:px-16 pb-20">
           {/* Main heading */}
           <div className="mb-16 text-center">
             <h1 className="text-6xl md:text-8xl font-black mb-6" 
@@ -521,21 +533,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Popular categories */}
-          <div className="mb-12">
-            <h2 className="text-sm font-semibold mb-4 text-gray-600 uppercase tracking-wide">popular rn</h2>
-            <div className="flex gap-2 md:gap-3 md:p-4 overflow-x-auto pb-2">
-              {["crypto chaos", "tech drama", "hot takes", "market vibes", "gaming", "gen z decoder"].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setShowChat(true)}
-                  className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-all"
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Popular personalities with cycling variations */}
+          <PopularPersonalities 
+            onPersonalityClick={(prompt) => {
+              setInput(prompt);
+              setShowChat(true);
+            }}
+          />
 
           {/* Feature cards grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -688,17 +692,36 @@ export default function Home() {
             <p className="text-xs text-gray-500 mt-4">
               warning: responses are unhinged but weirdly accurate
             </p>
-            <p className="text-xs text-gray-400 mt-2">
-              powered by <span className="font-bold">$throp</span>
-            </p>
           </div>
           
-          {/* Footer Navigation */}
-          <div className="flex justify-center gap-6 mt-12 pt-8 border-t border-gray-200 text-sm">
-            <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
-            <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
-            <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
-            <a href="https://x.com/throponsol" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">twitter</a>
+          {/* Footer Navigation - Fixed at bottom */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 py-3 z-10">
+            {/* Mobile: Simple centered links */}
+            <div className="md:hidden flex justify-center gap-6 text-sm">
+              <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+              <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+              <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+              <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+            </div>
+            
+            {/* Desktop: Full footer with logo, left menu, right powered by */}
+            <div className="hidden md:flex items-center justify-between px-6">
+              {/* Left: Small Throp logo + Navigation (OS menu bar style) */}
+              <div className="flex items-center gap-6">
+                <Image src="/throp-actual.svg" alt="throp" width={24} height={24} className="opacity-70" />
+                <div className="flex gap-6 text-sm">
+                  <Link href="/" className="hover:text-orange-500 transition-all">home</Link>
+                  <Link href="/about" className="hover:text-orange-500 transition-all">about</Link>
+                  <Link href="/docs" className="hover:text-orange-500 transition-all">docs</Link>
+                  <a href="https://x.com/askthrop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-all">@askthrop</a>
+                </div>
+              </div>
+              
+              {/* Right: Powered by */}
+              <div className="text-xs text-gray-400">
+                powered by <span className="font-bold">$throp</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
