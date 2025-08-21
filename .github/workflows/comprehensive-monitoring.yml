@@ -1,0 +1,511 @@
+name: Comprehensive System Monitoring
+
+on:
+  schedule:
+    # Run every 4 hours for critical monitoring
+    - cron: '0 */4 * * *'
+    # Run daily balance check at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/comprehensive-monitoring.yml'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  api-balance-monitoring:
+    name: API Balance & Credit Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      
+      - name: Check Anthropic API Balance
+        id: anthropic-balance
+        run: |
+          echo "💰 Checking Anthropic API Balance..."
+          
+          cat > check-anthropic.js << 'EOF'
+          const fetch = require('node-fetch');
+          
+          async function checkAnthropicBalance() {
+            const apiKey = process.env.ANTHROPIC_API_KEY;
+            
+            if (!apiKey) {
+              console.log('❌ Anthropic API key not found');
+              return { error: 'API key missing' };
+            }
+            
+            try {
+              // Check usage/balance via API
+              const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': apiKey,
+                  'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                  model: 'claude-3-haiku-20240307',
+                  max_tokens: 10,
+                  messages: [{ role: 'user', content: 'test' }]
+                })
+              });
+              
+              const headers = response.headers;
+              const rateLimitRemaining = headers.get('anthropic-ratelimit-requests-remaining');
+              const rateLimitReset = headers.get('anthropic-ratelimit-requests-reset');
+              const tokensRemaining = headers.get('anthropic-ratelimit-tokens-remaining');
+              
+              if (response.status === 200 || response.status === 400) {
+                // 400 is fine for test request
+                console.log('✅ Anthropic API accessible');
+                console.log(`📊 Rate Limits:`);
+                if (rateLimitRemaining) console.log(`  Requests remaining: ${rateLimitRemaining}`);
+                if (tokensRemaining) console.log(`  Tokens remaining: ${tokensRemaining}`);
+                if (rateLimitReset) console.log(`  Reset time: ${rateLimitReset}`);
+                
+                // Check if we're running low
+                const requestsLeft = parseInt(rateLimitRemaining) || 0;
+                const tokensLeft = parseInt(tokensRemaining) || 0;
+                
+                if (requestsLeft < 100) {
+                  console.log('⚠️ LOW REQUESTS WARNING: Less than 100 requests remaining');
+                  return { warning: 'low_requests', requestsLeft };
+                }
+                
+                if (tokensLeft < 10000) {
+                  console.log('⚠️ LOW TOKENS WARNING: Less than 10,000 tokens remaining');
+                  return { warning: 'low_tokens', tokensLeft };
+                }
+                
+                return { 
+                  success: true, 
+                  requestsLeft: requestsLeft || 'unknown',
+                  tokensLeft: tokensLeft || 'unknown'
+                };
+              } else {
+                const errorText = await response.text();
+                console.log(`❌ Anthropic API error: ${response.status}`);
+                console.log('Error:', errorText);
+                return { error: `HTTP ${response.status}`, details: errorText };
+              }
+            } catch (error) {
+              console.log('❌ Anthropic API check failed:', error.message);
+              return { error: error.message };
+            }
+          }
+          
+          const result = await checkAnthropicBalance();
+          
+          // Set outputs for GitHub Actions
+          if (result.warning) {
+            console.log(`::set-output name=status::warning`);
+            console.log(`::set-output name=message::${result.warning}`);
+          } else if (result.error) {
+            console.log(`::set-output name=status::error`);
+            console.log(`::set-output name=message::${result.error}`);
+          } else {
+            console.log(`::set-output name=status::success`);
+            console.log(`::set-output name=message::API healthy`);
+          }
+          
+          console.log(JSON.stringify(result, null, 2));
+          EOF
+          
+          node check-anthropic.js
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Check Perplexity API Balance
+        id: perplexity-balance
+        run: |
+          echo "🔍 Checking Perplexity API Balance..."
+          
+          cat > check-perplexity.js << 'EOF'
+          const fetch = require('node-fetch');
+          
+          async function checkPerplexityBalance() {
+            const apiKey = process.env.PERPLEXITY_API_KEY;
+            
+            if (!apiKey) {
+              console.log('❌ Perplexity API key not found');
+              return { error: 'API key missing' };
+            }
+            
+            try {
+              // Test with a minimal request
+              const response = await fetch('https://api.perplexity.ai/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                  model: 'sonar-small-online',
+                  messages: [{ role: 'user', content: 'test' }],
+                  max_tokens: 5
+                })
+              });
+              
+              const headers = response.headers;
+              const rateLimitRemaining = headers.get('x-ratelimit-remaining-requests');
+              const rateLimitReset = headers.get('x-ratelimit-reset-requests');
+              
+              if (response.status === 200 || response.status === 400) {
+                console.log('✅ Perplexity API accessible');
+                console.log(`📊 Rate Limits:`);
+                if (rateLimitRemaining) console.log(`  Requests remaining: ${rateLimitRemaining}`);
+                if (rateLimitReset) console.log(`  Reset time: ${rateLimitReset}`);
+                
+                // Check if we're running low
+                const requestsLeft = parseInt(rateLimitRemaining) || 0;
+                
+                if (requestsLeft < 50) {
+                  console.log('⚠️ LOW REQUESTS WARNING: Less than 50 requests remaining');
+                  return { warning: 'low_requests', requestsLeft };
+                }
+                
+                return { 
+                  success: true, 
+                  requestsLeft: requestsLeft || 'unknown'
+                };
+              } else {
+                const errorText = await response.text();
+                console.log(`❌ Perplexity API error: ${response.status}`);
+                console.log('Error:', errorText);
+                return { error: `HTTP ${response.status}`, details: errorText };
+              }
+            } catch (error) {
+              console.log('❌ Perplexity API check failed:', error.message);
+              return { error: error.message };
+            }
+          }
+          
+          const result = await checkPerplexityBalance();
+          
+          // Set outputs for GitHub Actions
+          if (result.warning) {
+            console.log(`::set-output name=status::warning`);
+            console.log(`::set-output name=message::${result.warning}`);
+          } else if (result.error) {
+            console.log(`::set-output name=status::error`);
+            console.log(`::set-output name=message::${result.error}`);
+          } else {
+            console.log(`::set-output name=status::success`);
+            console.log(`::set-output name=message::API healthy`);
+          }
+          
+          console.log(JSON.stringify(result, null, 2));
+          EOF
+          
+          node check-perplexity.js
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+
+      - name: Check X API Health & Rate Limits
+        id: x-api-health
+        run: |
+          echo "🐦 Checking X API Health..."
+          
+          cat > check-x-api.js << 'EOF'
+          const fetch = require('node-fetch');
+          
+          async function checkXAPIHealth() {
+            const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+            
+            if (!bearerToken) {
+              console.log('❌ X API Bearer token not found');
+              return { error: 'Bearer token missing' };
+            }
+            
+            try {
+              // Check rate limits (safe endpoint)
+              const response = await fetch('https://api.twitter.com/1.1/application/rate_limit_status.json', {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'User-Agent': 'throp-bot-monitoring'
+                }
+              });
+              
+              if (response.status === 200) {
+                const data = await response.json();
+                console.log('✅ X API accessible');
+                
+                // Check specific endpoints we use
+                const mentions = data.resources.statuses?.['/statuses/mentions_timeline'];
+                const userLookup = data.resources.users?.['/users/lookup'];
+                const search = data.resources.search?.['/search/tweets'];
+                
+                let warnings = [];
+                
+                if (mentions) {
+                  console.log(`📝 Mentions: ${mentions.remaining}/${mentions.limit} remaining`);
+                  if (mentions.remaining < 5) {
+                    warnings.push('mentions_low');
+                  }
+                }
+                
+                if (userLookup) {
+                  console.log(`👤 User lookup: ${userLookup.remaining}/${userLookup.limit} remaining`);
+                  if (userLookup.remaining < 10) {
+                    warnings.push('user_lookup_low');
+                  }
+                }
+                
+                if (search) {
+                  console.log(`🔍 Search: ${search.remaining}/${search.limit} remaining`);
+                  if (search.remaining < 10) {
+                    warnings.push('search_low');
+                  }
+                }
+                
+                if (warnings.length > 0) {
+                  return { warning: 'rate_limits_low', warnings };
+                }
+                
+                return { success: true, endpoints: Object.keys(data.resources).length };
+              } else {
+                const errorText = await response.text();
+                console.log(`❌ X API error: ${response.status}`);
+                console.log('Error:', errorText);
+                return { error: `HTTP ${response.status}`, details: errorText };
+              }
+            } catch (error) {
+              console.log('❌ X API check failed:', error.message);
+              return { error: error.message };
+            }
+          }
+          
+          const result = await checkXAPIHealth();
+          
+          // Set outputs for GitHub Actions
+          if (result.warning) {
+            console.log(`::set-output name=status::warning`);
+            console.log(`::set-output name=message::${result.warning}`);
+          } else if (result.error) {
+            console.log(`::set-output name=status::error`);
+            console.log(`::set-output name=message::${result.error}`);
+          } else {
+            console.log(`::set-output name=status::success`);
+            console.log(`::set-output name=message::API healthy`);
+          }
+          
+          console.log(JSON.stringify(result, null, 2));
+          EOF
+          
+          node check-x-api.js
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+
+  system-health-monitoring:
+    name: System Health Monitoring
+    runs-on: ubuntu-latest
+    needs: [api-balance-monitoring]
+    
+    steps:
+      - name: Check All Deployment Endpoints
+        run: |
+          echo "🌐 Comprehensive Endpoint Health Check..."
+          
+          BACKEND_URL="https://throp-bot-947985992378.us-central1.run.app"
+          FRONTEND_URL="https://throp.ai"
+          
+          # Backend health checks
+          echo "Testing backend endpoints..."
+          ENDPOINTS=(
+            "/health"
+            "/api/status" 
+            "/api/twitter/diagnostics"
+            "/api/hot-takes"
+            "/api/trending-prompts"
+          )
+          
+          FAILED_ENDPOINTS=()
+          
+          for endpoint in "${ENDPOINTS[@]}"; do
+            if curl -sf "$BACKEND_URL$endpoint" --max-time 30 > /dev/null; then
+              echo "✅ $endpoint - OK"
+            else
+              echo "❌ $endpoint - FAILED"
+              FAILED_ENDPOINTS+=("$endpoint")
+            fi
+          done
+          
+          # Frontend health check
+          if curl -sf "$FRONTEND_URL" --max-time 30 > /dev/null; then
+            echo "✅ Frontend - OK"
+          else
+            echo "❌ Frontend - FAILED"
+            FAILED_ENDPOINTS+=("frontend")
+          fi
+          
+          # Netlify function check
+          PROXY_RESPONSE=$(curl -s -X POST "$FRONTEND_URL/.netlify/functions/chat-proxy" \
+            -H "Content-Type: application/json" \
+            -d '{"messages":[{"role":"user","content":"health check"}]}' \
+            --max-time 30 || echo "proxy-failed")
+          
+          if echo "$PROXY_RESPONSE" | grep -q "proxy-failed"; then
+            echo "❌ Netlify function - FAILED"
+            FAILED_ENDPOINTS+=("netlify-function")
+          else
+            echo "✅ Netlify function - OK"
+          fi
+          
+          # Set output for issue creation
+          if [ ${#FAILED_ENDPOINTS[@]} -gt 0 ]; then
+            echo "FAILED_ENDPOINTS=${FAILED_ENDPOINTS[*]}" >> $GITHUB_ENV
+            echo "HEALTH_STATUS=failed" >> $GITHUB_ENV
+          else
+            echo "HEALTH_STATUS=success" >> $GITHUB_ENV
+          fi
+
+  create-alerts:
+    name: Create Monitoring Alerts
+    needs: [api-balance-monitoring, system-health-monitoring]
+    runs-on: ubuntu-latest
+    if: always()  # Run even if previous jobs fail
+    
+    steps:
+      - name: Create Low Balance Alert
+        if: steps.anthropic-balance.outputs.status == 'warning' || steps.perplexity-balance.outputs.status == 'warning' || steps.x-api-health.outputs.status == 'warning'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = `⚠️ API Balance Warning - ${new Date().toISOString()}`;
+            const body = `## API Balance Alert
+            
+            One or more APIs are running low on credits/requests:
+            
+            **Anthropic API**: ${{ steps.anthropic-balance.outputs.status }} - ${{ steps.anthropic-balance.outputs.message }}
+            **Perplexity API**: ${{ steps.perplexity-balance.outputs.status }} - ${{ steps.perplexity-balance.outputs.message }}  
+            **X API**: ${{ steps.x-api-health.outputs.status }} - ${{ steps.x-api-health.outputs.message }}
+            
+            ## Immediate Actions Required
+            
+            1. **Check API dashboards** for current usage and billing
+            2. **Top up credits** if running low
+            3. **Monitor usage patterns** to prevent future issues
+            4. **Consider rate limiting** if usage is too high
+            
+            ## API Dashboards
+            
+            - [Anthropic Console](https://console.anthropic.com/)
+            - [Perplexity Dashboard](https://www.perplexity.ai/settings/api)
+            - [X Developer Portal](https://developer.twitter.com/en/portal/dashboard)
+            
+            ## Monitoring Details
+            
+            Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed balance information.
+            
+            ---
+            *This alert was automatically generated by the monitoring system.*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['monitoring', 'api-balance', 'urgent', 'auto-generated']
+            });
+
+      - name: Create System Health Alert
+        if: env.HEALTH_STATUS == 'failed' || needs.api-balance-monitoring.result == 'failure' || needs.system-health-monitoring.result == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = `🚨 System Health Alert - ${new Date().toISOString()}`;
+            const failedEndpoints = process.env.FAILED_ENDPOINTS || 'Unknown';
+            
+            const body = `## System Health Alert
+            
+            Critical system components are experiencing issues:
+            
+            **Failed Endpoints**: ${failedEndpoints}
+            **Status**: System partially or completely down
+            
+            ## Immediate Actions Required
+            
+            1. **Check deployment status** in GCP Cloud Run and Netlify
+            2. **Review error logs** for specific failure causes
+            3. **Test manual deployment** if needed
+            4. **Monitor recovery** after fixes are applied
+            
+            ## Quick Recovery Steps
+            
+            \`\`\`bash
+            # Check backend status
+            curl https://throp-bot-947985992378.us-central1.run.app/health
+            
+            # Check frontend status  
+            curl https://throp.ai
+            
+            # Trigger manual deployment if needed
+            gh workflow run "Deploy to Google Cloud Platform"
+            \`\`\`
+            
+            ## Deployment Dashboards
+            
+            - [GCP Cloud Run Console](https://console.cloud.google.com/run?project=throp-469410)
+            - [Netlify Dashboard](https://app.netlify.com/sites/throp/overview)
+            - [GitHub Actions](https://github.com/${{ github.repository }}/actions)
+            
+            ## Monitoring Details
+            
+            Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed failure information.
+            
+            ---
+            *This alert was automatically generated by the monitoring system.*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['monitoring', 'system-health', 'urgent', 'auto-generated']
+            });
+
+      - name: Create Success Summary (Daily)
+        if: github.event.schedule == '0 9 * * *' && success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = `✅ Daily System Health Report - ${new Date().toISOString()}`;
+            const body = `## Daily Health Summary
+            
+            All systems are operational and healthy! 🎉
+            
+            **API Status**: All APIs responding normally
+            **Deployment Status**: All endpoints accessible  
+            **Balance Status**: No low balance warnings
+            
+            ## System Overview
+            
+            - ✅ **Backend**: https://throp-bot-947985992378.us-central1.run.app
+            - ✅ **Frontend**: https://throp.ai  
+            - ✅ **Anthropic API**: Healthy
+            - ✅ **Perplexity API**: Healthy
+            - ✅ **X API**: Healthy
+            
+            ---
+            *Daily automated health report. You'll only get urgent alerts if issues are detected.*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['monitoring', 'daily-report', 'auto-generated']
+            });

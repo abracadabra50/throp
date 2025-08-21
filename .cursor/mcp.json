@@ -19,6 +19,13 @@
         "-y",
         "@netlify/mcp"
       ]
-    }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/github-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+          }   
+        }
   }
 }

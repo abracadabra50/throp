@@ -5,12 +5,44 @@ interface TrendingPromptsProps {
   onPromptClick: (prompt: string) => void;
 }
 
+/**
+ * TrendingPrompts Component
+ * 
+ * Displays a cycling set of trending prompts with smooth animations.
+ * Perfect for mobile interfaces where space is limited.
+ * 
+ * Features:
+ * - Shows only 3 prompts at a time
+ * - Auto-cycles every 5 seconds
+ * - Mobile-responsive design
+ * - Smooth fade-in animations
+ * - Subtle rotation effects
+ * 
+ * Customisation Options:
+ * - Change PROMPTS_TO_SHOW (line 25) to display more/fewer prompts
+ * - Modify ROTATION_INTERVAL (line 26) to change cycling speed (in milliseconds)
+ * - Adjust mobile breakpoint (line 31) to change when mobile styles apply
+ * - Update text truncation limits (line 80-81) for different text lengths
+ */
 export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayPrompts, setDisplayPrompts] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   
   const PROMPTS_TO_SHOW = 3;
   const ROTATION_INTERVAL = 5000; // Rotate every 5 seconds
+  
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
   
   // Auto-rotate prompts
   useEffect(() => {
@@ -40,19 +72,21 @@ export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps
   return (
     <div className="flex items-center gap-2 px-2">
       {/* Prompts */}
-      <div className="flex flex-wrap gap-2 flex-1 justify-center">
+      <div className="flex flex-wrap gap-2 sm:gap-3 flex-1 justify-center">
         {displayPrompts.map((prompt, idx) => (
           <button
             key={`${currentIndex}-${idx}`}
             onClick={() => onPromptClick(prompt)}
-            className="px-3 py-1.5 md:px-4 md:py-2 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-xs md:text-sm font-medium shadow-sm max-w-[180px] md:max-w-[250px] truncate"
+            className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-xs sm:text-sm font-medium shadow-sm max-w-[140px] sm:max-w-[180px] md:max-w-[250px] truncate"
             style={{ 
               transform: `rotate(${getRandomRotation()}deg)`,
               animation: `fadeIn 0.5s ease-out ${idx * 100}ms forwards`
             }}
             title={prompt}
           >
-            {prompt.length > 35 ? prompt.substring(0, 35) + '...' : prompt}
+            {prompt.length > (isMobile ? 25 : 35) ? 
+              prompt.substring(0, isMobile ? 25 : 35) + '...' : 
+              prompt}
           </button>
         ))}
       </div>

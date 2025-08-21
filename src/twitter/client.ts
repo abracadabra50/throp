@@ -68,13 +68,10 @@ export class TwitterClient {
     // Initialize Bearer Token client for READING if available (better rate limits)
     if (bearerToken) {
       try {
-        // URL decode the bearer token (Twitter API returns URL-encoded tokens)
-        const decodedBearerToken = decodeURIComponent(bearerToken);
-        
-        logger.info('Bearer token URL-decoded for HTTP headers');
-        
-        this.readClient = new TwitterApi(decodedBearerToken);
-        logger.info('✅ Bearer Token client initialized for reading mentions (URL-decoded)');
+        // Use bearer token directly - it should already be properly formatted
+        // DO NOT URL decode - this was causing authentication failures
+        this.readClient = new TwitterApi(bearerToken);
+        logger.info('✅ Bearer Token client initialized for reading mentions (using original token format)');
       } catch (error) {
         logger.error('Failed to initialize Bearer Token client:', error);
         // Fallback to OAuth 1.0a client for reading

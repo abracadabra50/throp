@@ -1,5 +1,52 @@
 # Changelog
 
+## [2025-01-21] - Mobile Trending Prompts Enhancement 📱
+
+### Improved 🎯
+- **Mobile Trending Prompts**: Replaced the flex-wrap display with a cycling component that shows only 3 prompts at a time on mobile
+- **Automatic Rotation**: Trending prompts now auto-cycle every 5 seconds with smooth fade-in animations
+- **Mobile Responsiveness**: Better text truncation and button sizing for mobile screens (25 chars vs 35 chars on desktop)
+- **Responsive Design**: Enhanced gap spacing and padding that adapts to screen size (sm:gap-3 vs gap-2)
+- **Animation Effects**: Added subtle rotation and fade-in animations for a more engaging user experience
+
+### Technical Details 🔧
+- Integrated existing `TrendingPrompts` component into main page
+- Added mobile detection with window resize listener
+- Improved responsive Tailwind classes (xs/sm/md breakpoints)
+- Enhanced text truncation logic based on screen size
+- Maintained existing refresh functionality
+
+## [2025-08-21] - CI/CD Pipeline Enhancement & MCP Integration 🚀
+
+### Added ✨
+- **Environment Sync Workflow**: Daily automated health checks for all deployment environments
+- **MCP Server Integration**: GitHub, GCP, and Netlify MCP servers for enhanced automation
+- **Comprehensive Secret Validation**: Automatic checking of API key formats and configurations
+- **Deployment Verification**: Enhanced health checks with retry logic and timeout handling
+- **Automated Issue Creation**: GitHub issues created automatically on deployment failures
+- **CI/CD Fix Script**: Interactive script to diagnose and fix common CI/CD issues
+
+### Fixed 🔧
+- **NPM Dependency Issues**: Added `--legacy-peer-deps` support for React 18/Next.js 15 compatibility
+- **Frontend API Route Tests**: Removed tests for non-existent frontend API routes
+- **GitHub Token Security**: Secured personal access token in environment variables
+- **Integration Tests**: Updated to properly test Netlify functions instead of frontend routes
+- **Health Check Reliability**: Added retry logic with up to 5 attempts for deployment verification
+- **Workflow Error Handling**: Enhanced error reporting and debugging information
+
+### Enhanced 🚀
+- **Deployment Pipeline**: Robust health checks with 30-second stabilisation and comprehensive endpoint testing
+- **Frontend Testing**: Added Netlify function proxy validation and timeout handling
+- **Backend Verification**: Multi-endpoint testing including health, status, and Twitter diagnostics
+- **Documentation**: Updated CI/CD fix documentation with MCP server integration details
+
+### Technical Improvements ⚙️
+- Enhanced GitHub Actions workflows with better error handling and retry mechanisms
+- Integrated GCP MCP for Cloud Run service validation and monitoring
+- Added Netlify MCP for site deployment verification and function testing
+- Implemented comprehensive secret validation across all required services
+- Created automated environment health monitoring with proactive issue detection
+
 ## [2025-08-19] - Massive Personality Enhancement 🔥
 
 ### Enhanced 🚀

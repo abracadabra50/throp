@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import HotTakes from '@/components/HotTakes';
 import Link from 'next/link';
+import { TrendingPrompts } from '@/components/TrendingPrompts';
 import { executeSlashCommand, getCommandSuggestions, type SlashCommand } from '@/utils/slash-commands';
 import { useRouter } from 'next/navigation';
 import { 
@@ -484,21 +485,13 @@ export default function Home() {
                 🔄
               </button>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {trendingPrompts.map((prompt, index) => (
-                <button
-                  key={prompt}
-                  onClick={() => {
-                    setInput(prompt);
-                    setShowChat(true);
-                  }}
-                  className="px-5 py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-sm font-medium shadow-sm"
-                  style={{ transform: `rotate(${promptRotations[index] || 0}deg)` }}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
+            <TrendingPrompts 
+              prompts={trendingPrompts}
+              onPromptClick={(prompt) => {
+                setInput(prompt);
+                setShowChat(true);
+              }}
+            />
 
             {/* Quick chat entry */}
             <div className="max-w-xl mx-auto mt-8">

@@ -1,0 +1,354 @@
+name: X API Authentication Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/twitter/**'
+      - 'test-*.ts'
+      - '.env.example'
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'src/twitter/**'
+      - 'test-*.ts'
+  schedule:
+    # Run every 4 hours to monitor X API health
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  x-api-authentication:
+    name: X API Authentication Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Test Bearer Token Format
+        run: |
+          echo "🔐 Testing X API Bearer Token Format..."
+          
+          # Create test script for bearer token validation
+          cat > test-bearer-format.js << 'EOF'
+          const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+          
+          console.log('🔍 Bearer Token Validation:');
+          console.log('- Length:', bearerToken ? bearerToken.length : 'MISSING');
+          console.log('- Starts with AAAA:', bearerToken ? bearerToken.startsWith('AAAA') : false);
+          console.log('- Contains %2F:', bearerToken ? bearerToken.includes('%2F') : false);
+          console.log('- Contains %3D:', bearerToken ? bearerToken.includes('%3D') : false);
+          
+          if (!bearerToken) {
+            console.log('❌ Bearer token missing');
+            process.exit(1);
+          }
+          
+          if (!bearerToken.startsWith('AAAA')) {
+            console.log('❌ Invalid bearer token format');
+            process.exit(1);
+          }
+          
+          if (!bearerToken.includes('%')) {
+            console.log('⚠️ Bearer token may not be URL-encoded');
+          }
+          
+          console.log('✅ Bearer token format appears valid');
+          EOF
+          
+          node test-bearer-format.js
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+
+      - name: Test X API Rate Limits
+        run: |
+          echo "📊 Testing X API Rate Limits..."
+          
+          # Create rate limit test
+          cat > test-rate-limits.js << 'EOF'
+          const fetch = require('node-fetch');
+          
+          async function testRateLimits() {
+            const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+            
+            try {
+              const response = await fetch('https://api.twitter.com/1.1/application/rate_limit_status.json', {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'User-Agent': 'throp-bot-test'
+                }
+              });
+              
+              if (response.status === 200) {
+                const data = await response.json();
+                const endpoints = Object.keys(data.resources).length;
+                console.log(`✅ Rate limit check: ${response.status} (${endpoints} endpoint categories)`);
+                
+                // Check specific endpoints we use
+                const mentions = data.resources.statuses?.['/statuses/mentions_timeline'];
+                const userLookup = data.resources.users?.['/users/lookup'];
+                
+                if (mentions) {
+                  console.log(`📝 Mentions timeline: ${mentions.remaining}/${mentions.limit} remaining`);
+                }
+                if (userLookup) {
+                  console.log(`👤 User lookup: ${userLookup.remaining}/${userLookup.limit} remaining`);
+                }
+                
+                return true;
+              } else {
+                console.log(`❌ Rate limit check failed: ${response.status}`);
+                const errorText = await response.text();
+                console.log('Error:', errorText);
+                return false;
+              }
+            } catch (error) {
+              console.log('❌ Rate limit check error:', error.message);
+              return false;
+            }
+          }
+          
+          testRateLimits().then(success => {
+            process.exit(success ? 0 : 1);
+          });
+          EOF
+          
+          node test-rate-limits.js
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+
+      - name: Test User Mentions API
+        run: |
+          echo "📬 Testing X API User Mentions..."
+          
+          cat > test-mentions.js << 'EOF'
+          const fetch = require('node-fetch');
+          
+          async function testMentions() {
+            const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+            const userId = process.env.TWITTER_BOT_USER_ID;
+            
+            if (!userId) {
+              console.log('⚠️ TWITTER_BOT_USER_ID not set, skipping mentions test');
+              return true;
+            }
+            
+            try {
+              const url = `https://api.twitter.com/2/users/${userId}/mentions?max_results=5`;
+              const response = await fetch(url, {
+                headers: {
+                  'Authorization': `Bearer ${bearerToken}`,
+                  'User-Agent': 'throp-bot-test'
+                }
+              });
+              
+              if (response.status === 200) {
+                const data = await response.json();
+                const mentionCount = data.data ? data.data.length : 0;
+                console.log(`✅ Mentions API: ${response.status} (${mentionCount} mentions retrieved)`);
+                
+                if (data.meta) {
+                  console.log(`📊 Meta: newest_id=${data.meta.newest_id ? 'present' : 'none'}`);
+                }
+                
+                return true;
+              } else if (response.status === 429) {
+                console.log('⚠️ Mentions API: Rate limited (429) - this is expected in tests');
+                return true; // Don't fail on rate limits during testing
+              } else {
+                console.log(`❌ Mentions API failed: ${response.status}`);
+                const errorText = await response.text();
+                console.log('Error:', errorText);
+                return false;
+              }
+            } catch (error) {
+              console.log('❌ Mentions API error:', error.message);
+              return false;
+            }
+          }
+          
+          testMentions().then(success => {
+            process.exit(success ? 0 : 1);
+          });
+          EOF
+          
+          node test-mentions.js
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+          TWITTER_BOT_USER_ID: ${{ secrets.TWITTER_BOT_USER_ID }}
+
+      - name: Test Backend X API Integration
+        run: |
+          echo "🔗 Testing Backend X API Integration..."
+          
+          BACKEND_URL="https://throp-bot-947985992378.us-central1.run.app"
+          
+          # Test Twitter diagnostics endpoint
+          echo "Testing Twitter diagnostics..."
+          DIAG_RESPONSE=$(curl -s "$BACKEND_URL/api/twitter/diagnostics" --max-time 30)
+          
+          if echo "$DIAG_RESPONSE" | grep -q "readCapability"; then
+            echo "✅ Twitter diagnostics endpoint responding"
+            
+            # Check capabilities
+            if echo "$DIAG_RESPONSE" | grep -q '"readCapability":true'; then
+              echo "✅ Read capability enabled"
+            else
+              echo "⚠️ Read capability disabled or not configured"
+            fi
+            
+            if echo "$DIAG_RESPONSE" | grep -q '"writeCapability":true'; then
+              echo "✅ Write capability enabled"
+            else
+              echo "⚠️ Write capability disabled or not configured"
+            fi
+          else
+            echo "❌ Twitter diagnostics endpoint failed"
+            echo "Response: $DIAG_RESPONSE"
+            exit 1
+          fi
+          
+          # Test mentions endpoint (if available)
+          echo "Testing backend mentions endpoint..."
+          MENTIONS_RESPONSE=$(curl -s "$BACKEND_URL/api/mentions" --max-time 30 || echo "endpoint-timeout")
+          
+          if echo "$MENTIONS_RESPONSE" | grep -q "endpoint-timeout"; then
+            echo "⚠️ Mentions endpoint timeout - may need longer warm-up"
+          elif echo "$MENTIONS_RESPONSE" | grep -q "error\|Error"; then
+            echo "⚠️ Mentions endpoint returned error (may be rate limited)"
+          else
+            echo "✅ Mentions endpoint responding"
+          fi
+
+  x-api-library-test:
+    name: X API Library Integration Test
+    runs-on: ubuntu-latest
+    needs: [x-api-authentication]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Test twitter-api-v2 Library
+        run: |
+          echo "📚 Testing twitter-api-v2 Library Integration..."
+          
+          cat > test-library.js << 'EOF'
+          const { TwitterApi } = require('twitter-api-v2');
+          
+          async function testLibrary() {
+            const bearerToken = process.env.TWITTER_BEARER_TOKEN;
+            
+            console.log('🔧 Testing twitter-api-v2 library...');
+            console.log('Token format check:', {
+              length: bearerToken ? bearerToken.length : 0,
+              startsWithAAAA: bearerToken ? bearerToken.startsWith('AAAA') : false,
+              isUrlEncoded: bearerToken ? bearerToken.includes('%') : false
+            });
+            
+            try {
+              // Test with original token (should work)
+              const client = new TwitterApi(bearerToken);
+              const readClient = client.readOnly;
+              
+              // Test rate limit endpoint
+              console.log('Testing rate limits...');
+              const rateLimits = await readClient.v1.getRateLimits();
+              console.log('✅ Library rate limits check successful');
+              
+              // Test user lookup (safer than mentions)
+              const userId = process.env.TWITTER_BOT_USER_ID;
+              if (userId) {
+                console.log('Testing user lookup...');
+                const user = await readClient.v2.user(userId);
+                console.log(`✅ Library user lookup successful: @${user.data.username}`);
+              }
+              
+              return true;
+            } catch (error) {
+              console.log('❌ Library test failed:', error.message);
+              
+              if (error.code === 429) {
+                console.log('⚠️ Rate limited - this is expected during testing');
+                return true;
+              }
+              
+              return false;
+            }
+          }
+          
+          testLibrary().then(success => {
+            process.exit(success ? 0 : 1);
+          });
+          EOF
+          
+          node test-library.js
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+          TWITTER_BOT_USER_ID: ${{ secrets.TWITTER_BOT_USER_ID }}
+
+  create-issue-on-failure:
+    name: Create Issue on X API Failure
+    needs: [x-api-authentication, x-api-library-test]
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 X API Tests Failed - ${new Date().toISOString()}`,
+              body: `The X API authentication tests have failed. Please check the [workflow run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.
+
+**Possible issues:**
+- Bearer token format changed or corrupted
+- X API rate limits exceeded
+- X API service disruption
+- Bearer token permissions revoked
+- Backend deployment issues affecting X API integration
+
+**Immediate actions:**
+1. Check workflow logs for specific error messages
+2. Verify bearer token format (should start with 'AAAA' and contain '%' characters)
+3. Test X API endpoints manually using curl
+4. Check X Developer Portal for account status
+5. Verify backend deployment health
+
+**Reference Documentation:**
+- See X_API_INVESTIGATION_SUMMARY.md for troubleshooting guide
+- Bearer token must be used in original URL-encoded format
+- Never decode bearer tokens before passing to twitter-api-v2 library
+
+**Rate Limit Info:**
+If this is a rate limit issue (429 errors), the tests will automatically retry on the next scheduled run.`,
+              labels: ['x-api', 'authentication', 'urgent', 'ci-cd']
+            })

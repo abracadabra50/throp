@@ -87,8 +87,32 @@ jobs:
       - name: Health Check
         run: |
           sleep 30  # Wait for deployment to stabilize
-          curl -f ${{ steps.get-url.outputs.service_url }}/health || exit 1
-          echo "✅ Backend health check passed!"
+          
+          SERVICE_URL="${{ steps.get-url.outputs.service_url }}"
+          echo "Testing health endpoint: $SERVICE_URL/health"
+          
+          # Retry health check up to 5 times
+          for i in {1..5}; do
+            if curl -sf "$SERVICE_URL/health" > /dev/null; then
+              echo "✅ Backend health check passed on attempt $i!"
+              break
+            else
+              echo "⚠️ Health check failed on attempt $i, retrying..."
+              sleep 10
+            fi
+            
+            if [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              exit 1
+            fi
+          done
+          
+          # Test additional endpoints
+          echo "Testing status endpoint..."
+          curl -sf "$SERVICE_URL/api/status" || echo "⚠️ Status endpoint not ready"
+          
+          echo "Testing Twitter diagnostics..."
+          curl -sf "$SERVICE_URL/api/twitter/diagnostics" || echo "⚠️ Twitter diagnostics not ready"
 
   # 3. Deploy Frontend to Netlify
   deploy-frontend:
@@ -126,8 +150,32 @@ jobs:
       - name: Frontend Health Check
         run: |
           sleep 20
-          curl -f https://throp.ai || exit 1
-          echo "✅ Frontend health check passed!"
+          
+          FRONTEND_URL="https://throp.ai"
+          echo "Testing frontend: $FRONTEND_URL"
+          
+          # Test main page
+          if curl -sf "$FRONTEND_URL" > /dev/null; then
+            echo "✅ Frontend main page accessible"
+          else
+            echo "❌ Frontend main page failed"
+            exit 1
+          fi
+          
+          # Test Netlify function
+          echo "Testing Netlify chat function..."
+          RESPONSE=$(curl -s -X POST "$FRONTEND_URL/.netlify/functions/chat-proxy" \
+            -H "Content-Type: application/json" \
+            -d '{"messages":[{"role":"user","content":"deployment test"}]}' \
+            --max-time 30 || echo "function-timeout")
+          
+          if echo "$RESPONSE" | grep -q "function-timeout"; then
+            echo "⚠️ Netlify function timeout - may need warm-up"
+          elif echo "$RESPONSE" | grep -q "error\|Error"; then
+            echo "⚠️ Netlify function returned error: $RESPONSE"
+          else
+            echo "✅ Netlify function responding"
+          fi
 
   # 4. Smoke Tests
   smoke-tests:
@@ -143,6 +191,28 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"message": "hello"}' \
             --fail-with-body || exit 1
+      
+      - name: Test X API Integration
+        run: |
+          echo "Testing X API integration..."
+          
+          # Test Twitter diagnostics
+          DIAG_RESPONSE=$(curl -s https://throp-bot-947985992378.us-central1.run.app/api/twitter/diagnostics --max-time 30)
+          
+          if echo "$DIAG_RESPONSE" | grep -q "readCapability"; then
+            echo "✅ X API diagnostics responding"
+            
+            # Check if bearer token is working
+            if echo "$DIAG_RESPONSE" | grep -q '"readCapability":true'; then
+              echo "✅ X API read capability confirmed"
+            else
+              echo "⚠️ X API read capability may be disabled"
+            fi
+          else
+            echo "❌ X API diagnostics failed"
+            echo "Response: $DIAG_RESPONSE"
+            exit 1
+          fi
       
       - name: Test Hot Takes
         run: |
