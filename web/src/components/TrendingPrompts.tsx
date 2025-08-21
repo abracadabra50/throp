@@ -30,12 +30,12 @@ export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps
   const [isMobile, setIsMobile] = useState(false);
   
   const PROMPTS_TO_SHOW = 3;
-  const ROTATION_INTERVAL = 5000; // Rotate every 5 seconds
+  const ROTATION_INTERVAL = 30000; // Rotate every 30 seconds - balanced timing
   
   // Detect mobile screen size
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 640);
+      setIsMobile(window.innerWidth < 768); // Match md: breakpoint
     };
     
     checkIsMobile();
@@ -46,7 +46,7 @@ export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps
   
   // Auto-rotate prompts
   useEffect(() => {
-    if (prompts.length <= PROMPTS_TO_SHOW) return;
+    if (prompts.length < PROMPTS_TO_SHOW) return; // Only skip if we have fewer than 3 prompts
     
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % prompts.length);
@@ -70,23 +70,21 @@ export function TrendingPrompts({ prompts, onPromptClick }: TrendingPromptsProps
   const getRandomRotation = () => Math.random() * 3 - 1.5; // Subtle rotation
   
   return (
-    <div className="flex items-center gap-2 px-2">
-      {/* Prompts */}
-      <div className="flex flex-wrap gap-2 sm:gap-3 flex-1 justify-center">
+    <div className="px-2">
+      {/* Mobile: Stack vertically, Desktop: Horizontal flex */}
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-3 flex-1 justify-center">
         {displayPrompts.map((prompt, idx) => (
           <button
             key={`${currentIndex}-${idx}`}
             onClick={() => onPromptClick(prompt)}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-xs sm:text-sm font-medium shadow-sm max-w-[140px] sm:max-w-[180px] md:max-w-[250px] truncate"
+            className="px-4 py-3 md:px-5 md:py-2.5 bg-white border-2 border-black rounded-full hover:bg-orange-50 transition-all hover:scale-105 text-sm font-medium shadow-sm w-full md:w-auto md:max-w-[280px] text-center"
             style={{ 
               transform: `rotate(${getRandomRotation()}deg)`,
-              animation: `fadeIn 0.5s ease-out ${idx * 100}ms forwards`
+              animation: `fadeIn 0.5s ease-out ${idx * 150}ms forwards`
             }}
             title={prompt}
           >
-            {prompt.length > (isMobile ? 25 : 35) ? 
-              prompt.substring(0, isMobile ? 25 : 35) + '...' : 
-              prompt}
+            {prompt}
           </button>
         ))}
       </div>

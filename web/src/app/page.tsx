@@ -10,8 +10,6 @@ import { useRouter } from 'next/navigation';
 import { 
   shouldAutoShowChat, 
   canNavigateBetweenPages, 
-  getChatUrl, 
-  getLandingUrl,
   getDomainType 
 } from '@/utils/domain-detect';
 interface Message {
@@ -45,8 +43,7 @@ export default function Home() {
   // Random values for message bubbles
   const [messageRotations, setMessageRotations] = useState<Map<string, {avatar: number, bubble: number}>>(new Map());
   
-  // Random values for prompt buttons (7 prompts)
-  const [promptRotations, setPromptRotations] = useState<number[]>([]);
+
   
   // Trending prompts from API
   const [trendingPrompts, setTrendingPrompts] = useState<string[]>([
@@ -92,10 +89,7 @@ export default function Home() {
       }))
     );
 
-    // Set random rotations for prompt buttons
-    setPromptRotations(
-      Array.from({ length: 7 }, () => Math.random() * 2 - 1)
-    );
+
 
     // Load saved messages
     const saved = localStorage.getItem('throp-messages');
